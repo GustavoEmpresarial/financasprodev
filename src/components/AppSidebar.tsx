@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Transações", url: "/transactions", icon: ArrowDownUp },
   { title: "Metas", url: "/goals", icon: Target },
 ];

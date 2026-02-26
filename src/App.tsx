@@ -10,6 +10,11 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Goals from "./pages/Goals";
+import CreditCards from "./pages/CreditCards";
+import Bills from "./pages/Bills";
+import Investments from "./pages/Investments";
+import Crypto from "./pages/Crypto";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -30,6 +35,11 @@ function AppRoutes() {
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
       <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
+      <Route path="/credit-cards" element={<ProtectedRoute><CreditCards /></ProtectedRoute>} />
+      <Route path="/bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
+      <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
+      <Route path="/crypto" element={<ProtectedRoute><Crypto /></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

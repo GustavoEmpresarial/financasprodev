@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -6,6 +6,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -13,11 +14,49 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-const items = [
+const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Transações", url: "/transactions", icon: ArrowDownUp },
   { title: "Metas", url: "/goals", icon: Target },
 ];
+
+const financeItems = [
+  { title: "Cartões", url: "/credit-cards", icon: CreditCard },
+  { title: "Contas a Pagar", url: "/bills", icon: Receipt },
+  { title: "Investimentos", url: "/investments", icon: TrendingUp },
+  { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
+];
+
+const analysisItems = [
+  { title: "Painel Analítico", url: "/analytics", icon: BarChart3 },
+];
+
+function NavGroup({ label, items }: { label: string; items: typeof mainItems }) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-muted px-3 mb-1">{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to={item.url}
+                  end={item.url === "/"}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+                  activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
 
 export function AppSidebar() {
   const { signOut, user } = useAuth();
@@ -37,27 +76,9 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <NavGroup label="Principal" items={mainItems} />
+        <NavGroup label="Financeiro" items={financeItems} />
+        <NavGroup label="Análise" items={analysisItems} />
       </SidebarContent>
 
       <SidebarFooter className="p-4">

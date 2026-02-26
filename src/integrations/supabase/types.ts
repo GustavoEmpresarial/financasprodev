@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      bills: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          is_paid: boolean
+          is_recurring: boolean
+          notes: string | null
+          paid_at: string | null
+          recurrence_interval: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          is_paid?: boolean
+          is_recurring?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          recurrence_interval?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          is_paid?: boolean
+          is_recurring?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          recurrence_interval?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string | null
@@ -38,6 +94,119 @@ export type Database = {
           is_default?: boolean
           name?: string
           type?: string
+        }
+        Relationships: []
+      }
+      category_budgets: {
+        Row: {
+          budget_amount: number
+          category_id: string | null
+          created_at: string
+          id: string
+          month: string
+          user_id: string
+        }
+        Insert: {
+          budget_amount?: number
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          month: string
+          user_id: string
+        }
+        Update: {
+          budget_amount?: number
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          month?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_cards: {
+        Row: {
+          brand: string | null
+          closing_day: number
+          color: string | null
+          created_at: string
+          due_day: number
+          id: string
+          name: string
+          total_limit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string | null
+          closing_day?: number
+          color?: string | null
+          created_at?: string
+          due_day?: number
+          id?: string
+          name: string
+          total_limit?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string | null
+          closing_day?: number
+          color?: string | null
+          created_at?: string
+          due_day?: number
+          id?: string
+          name?: string
+          total_limit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crypto_holdings: {
+        Row: {
+          avg_buy_price: number
+          created_at: string
+          current_price: number
+          id: string
+          name: string
+          notes: string | null
+          quantity: number
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_buy_price?: number
+          created_at?: string
+          current_price?: number
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_buy_price?: number
+          created_at?: string
+          current_price?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -69,6 +238,54 @@ export type Database = {
           month?: string
           target_amount?: number
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          created_at: string
+          current_value: number
+          id: string
+          institution: string | null
+          invested_amount: number
+          maturity_date: string | null
+          name: string
+          notes: string | null
+          rate: string | null
+          start_date: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          institution?: string | null
+          invested_amount?: number
+          maturity_date?: string | null
+          name: string
+          notes?: string | null
+          rate?: string | null
+          start_date?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          institution?: string | null
+          invested_amount?: number
+          maturity_date?: string | null
+          name?: string
+          notes?: string | null
+          rate?: string | null
+          start_date?: string
+          type?: string
           updated_at?: string
           user_id?: string
         }

@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3 } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -29,6 +29,9 @@ const financeItems = [
 
 const analysisItems = [
   { title: "Painel Analítico", url: "/analytics", icon: BarChart3 },
+  { title: "Saúde Financeira", url: "/financial-health", icon: Heart },
+  { title: "Simulador", url: "/simulator", icon: Calculator },
+  { title: "Importar CSV", url: "/import", icon: FileSpreadsheet },
 ];
 
 function NavGroup({ label, items }: { label: string; items: typeof mainItems }) {

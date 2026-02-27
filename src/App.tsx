@@ -15,6 +15,9 @@ import Bills from "./pages/Bills";
 import Investments from "./pages/Investments";
 import Crypto from "./pages/Crypto";
 import Analytics from "./pages/Analytics";
+import FinancialHealth from "./pages/FinancialHealth";
+import Simulator from "./pages/Simulator";
+import ImportCSV from "./pages/ImportCSV";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -40,6 +43,9 @@ function AppRoutes() {
       <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
       <Route path="/crypto" element={<ProtectedRoute><Crypto /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+      <Route path="/financial-health" element={<ProtectedRoute><FinancialHealth /></ProtectedRoute>} />
+      <Route path="/simulator" element={<ProtectedRoute><Simulator /></ProtectedRoute>} />
+      <Route path="/import" element={<ProtectedRoute><ImportCSV /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      alt_investment_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          investment_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          investment_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          investment_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alt_investment_earnings_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "alt_investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alt_investments: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          expiration_date: string | null
+          id: string
+          invested_amount: number
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          expiration_date?: string | null
+          id?: string
+          invested_amount?: number
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          expiration_date?: string | null
+          id?: string
+          invested_amount?: number
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bills: {
         Row: {
           amount: number

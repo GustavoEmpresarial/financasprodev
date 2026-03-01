@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet, Gamepad2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -25,6 +25,7 @@ const financeItems = [
   { title: "Contas a Pagar", url: "/bills", icon: Receipt },
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
   { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
+  { title: "Invest. Alternativos", url: "/alt-investments", icon: Gamepad2 },
 ];
 
 const analysisItems = [

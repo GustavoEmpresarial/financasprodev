@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Plus, Trash2, TrendingUp, TrendingDown, Tag } from "lucide-react";
+import { ReceiptScanner } from "@/components/ReceiptScanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ export default function Transactions() {
         </div>
         <div className="flex items-center gap-3">
           <MonthPicker value={month} onChange={setMonth} />
+          <ReceiptScanner />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm">

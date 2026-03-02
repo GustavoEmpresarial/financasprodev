@@ -1,6 +1,8 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,8 +10,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="flex h-14 items-center border-b bg-card/50 px-4 backdrop-blur-sm lg:px-6">
+          <div className="flex h-14 items-center justify-between border-b bg-card/50 px-4 backdrop-blur-sm lg:px-6">
             <SidebarTrigger />
+            <div className="flex items-center gap-2">
+              <VoiceAssistant />
+              <ThemeToggle />
+            </div>
           </div>
           <div className="p-4 pb-20 lg:p-6 lg:pb-6">{children}</div>
         </main>

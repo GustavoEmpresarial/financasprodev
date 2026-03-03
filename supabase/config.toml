@@ -1,1 +1,19 @@
 project_id = "acczjlanziulxvpdosca"
+
+[functions.parse-receipt]
+verify_jwt = false
+
+[functions.parse-voice-command]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false

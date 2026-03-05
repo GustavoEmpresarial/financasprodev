@@ -163,7 +163,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">{t.categories?.name || "Sem categoria"}</p>
-                      <p className="text-xs text-muted-foreground">{t.description || format(new Date(t.date), "dd/MM/yyyy")}</p>
+                      <p className="text-xs text-muted-foreground">{t.description || format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy")}</p>
                     </div>
                   </div>
                   <p className={`text-sm font-semibold ${t.type === "income" ? "text-income" : "text-expense"}`}>

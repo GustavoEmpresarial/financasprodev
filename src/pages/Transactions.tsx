@@ -138,7 +138,7 @@ export default function Transactions() {
                         {t.is_fixed && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Fixa</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {t.description ? `${t.description} · ` : ""}{format(new Date(t.date), "dd/MM/yyyy")}
+                        {t.description ? `${t.description} · ` : ""}{format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy")}
                       </p>
                     </div>
                   </div>

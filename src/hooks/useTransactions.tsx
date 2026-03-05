@@ -22,7 +22,11 @@ export function useTransactions(month?: string) {
 
   const startOfMonth = month ? `${month}-01` : undefined;
   const endOfMonth = month
-    ? new Date(parseInt(month.split("-")[0]), parseInt(month.split("-")[1]), 0).toISOString().split("T")[0]
+    ? (() => {
+        const [y, m] = month.split("-").map(Number);
+        const lastDay = new Date(y, m, 0).getDate();
+        return `${month}-${String(lastDay).padStart(2, "0")}`;
+      })()
     : undefined;
 
   const query = useQuery({

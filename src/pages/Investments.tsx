@@ -192,7 +192,7 @@ export default function Investments() {
                       <div>
                         <p className="text-sm font-medium">{inv.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {inv.institution || "Sem instituição"} · {inv.rate || "N/A"} · Desde {format(new Date(inv.start_date), "dd/MM/yyyy")}
+                          {inv.institution || "Sem instituição"} · {inv.rate || "N/A"} · Desde {format(new Date(inv.start_date + "T12:00:00"), "dd/MM/yyyy")}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">

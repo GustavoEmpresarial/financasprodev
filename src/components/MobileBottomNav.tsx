@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, ArrowDownUp, Target, BarChart3, MoreHorizontal, Wallet } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Wallet, BarChart3, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {
@@ -18,23 +18,24 @@ import {
   Heart,
   Calculator,
   FileSpreadsheet,
+  Target,
 } from "lucide-react";
 
 const primaryItems = [
   { title: "Home", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Transações", url: "/transactions", icon: ArrowDownUp },
-  { title: "Metas", url: "/goals", icon: Target },
+  { title: "Despesas", url: "/transactions", icon: ArrowDownUp },
+  { title: "Ganhos", url: "/earnings", icon: Wallet },
   { title: "Análise", url: "/analytics", icon: BarChart3 },
 ];
 
 const moreItems = [
-  { title: "Cartões", url: "/credit-cards", icon: CreditCard },
-  { title: "Contas a Pagar", url: "/bills", icon: Receipt },
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
+  { title: "Contas a Pagar", url: "/bills", icon: Receipt },
+  { title: "Cartões", url: "/credit-cards", icon: CreditCard },
+  { title: "Metas", url: "/goals", icon: Target },
+  { title: "Saúde Financeira", url: "/financial-health", icon: Heart },
   { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
   { title: "Invest. Alternativos", url: "/alt-investments", icon: Gamepad2 },
-  { title: "Ganhos & Lucros", url: "/earnings", icon: Wallet },
-  { title: "Saúde Financeira", url: "/financial-health", icon: Heart },
   { title: "Simulador", url: "/simulator", icon: Calculator },
   { title: "Importar CSV", url: "/import", icon: FileSpreadsheet },
 ];

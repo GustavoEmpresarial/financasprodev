@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, ArrowDownUp, Target, BarChart3, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Target, BarChart3, MoreHorizontal, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {

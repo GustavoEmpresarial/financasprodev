@@ -290,6 +290,66 @@ export type Database = {
         }
         Relationships: []
       }
+      earnings: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          currency: string
+          date: string
+          description: string | null
+          id: string
+          linked_investment_id: string | null
+          linked_traditional_investment_id: string | null
+          source_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          description?: string | null
+          id?: string
+          linked_investment_id?: string | null
+          linked_traditional_investment_id?: string | null
+          source_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          description?: string | null
+          id?: string
+          linked_investment_id?: string | null
+          linked_traditional_investment_id?: string | null
+          source_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earnings_linked_investment_id_fkey"
+            columns: ["linked_investment_id"]
+            isOneToOne: false
+            referencedRelation: "alt_investments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_linked_traditional_investment_id_fkey"
+            columns: ["linked_traditional_investment_id"]
+            isOneToOne: false
+            referencedRelation: "investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_goals: {
         Row: {
           created_at: string

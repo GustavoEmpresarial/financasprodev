@@ -20,6 +20,7 @@ import FinancialHealth from "./pages/FinancialHealth";
 import Simulator from "./pages/Simulator";
 import ImportCSV from "./pages/ImportCSV";
 import AltInvestments from "./pages/AltInvestments";
+import Earnings from "./pages/Earnings";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -49,6 +50,7 @@ function AppRoutes() {
       <Route path="/simulator" element={<ProtectedRoute><Simulator /></ProtectedRoute>} />
       <Route path="/import" element={<ProtectedRoute><ImportCSV /></ProtectedRoute>} />
       <Route path="/alt-investments" element={<ProtectedRoute><AltInvestments /></ProtectedRoute>} />
+      <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

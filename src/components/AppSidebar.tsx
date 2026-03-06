@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowDownUp, Target, LogOut, Wallet, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet, Gamepad2 } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Wallet, Target, LogOut, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet, Gamepad2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -16,23 +16,23 @@ import {
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Transações", url: "/transactions", icon: ArrowDownUp },
-  { title: "Metas", url: "/goals", icon: Target },
-];
-
-const financeItems = [
-  { title: "Cartões", url: "/credit-cards", icon: CreditCard },
-  { title: "Contas a Pagar", url: "/bills", icon: Receipt },
+  { title: "Despesas", url: "/transactions", icon: ArrowDownUp },
+  { title: "Registrar Ganhos", url: "/earnings", icon: Wallet },
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
-  { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
-  { title: "Invest. Alternativos", url: "/alt-investments", icon: Gamepad2 },
-  { title: "Ganhos & Lucros", url: "/earnings", icon: Wallet },
+  { title: "Contas a Pagar", url: "/bills", icon: Receipt },
+  { title: "Cartões", url: "/credit-cards", icon: CreditCard },
 ];
 
 const analysisItems = [
   { title: "Painel Analítico", url: "/analytics", icon: BarChart3 },
   { title: "Saúde Financeira", url: "/financial-health", icon: Heart },
+  { title: "Metas Financeiras", url: "/goals", icon: Target },
   { title: "Simulador", url: "/simulator", icon: Calculator },
+];
+
+const otherItems = [
+  { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
+  { title: "Invest. Alternativos", url: "/alt-investments", icon: Gamepad2 },
   { title: "Importar CSV", url: "/import", icon: FileSpreadsheet },
 ];
 
@@ -82,8 +82,8 @@ export function AppSidebar() {
 
       <SidebarContent>
         <NavGroup label="Principal" items={mainItems} />
-        <NavGroup label="Financeiro" items={financeItems} />
-        <NavGroup label="Análise" items={analysisItems} />
+        <NavGroup label="Análise & Metas" items={analysisItems} />
+        <NavGroup label="Outros" items={otherItems} />
       </SidebarContent>
 
       <SidebarFooter className="p-4">

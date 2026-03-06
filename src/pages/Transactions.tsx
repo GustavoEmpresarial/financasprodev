@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Plus, Trash2, TrendingUp, TrendingDown, Tag } from "lucide-react";
+import { Plus, Trash2, TrendingDown } from "lucide-react";
 import { ReceiptScanner } from "@/components/ReceiptScanner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,13 +19,12 @@ export default function Transactions() {
   const { data: categories = [] } = useCategories();
   const { addTransaction } = useTransactions(month);
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"income" | "expense">("expense");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     await addTransaction.mutateAsync({
-      type,
+      type: "expense",
       amount: parseFloat(form.get("amount") as string),
       category_id: form.get("category_id") as string,
       description: (form.get("description") as string) || undefined,
@@ -35,17 +34,22 @@ export default function Transactions() {
     setOpen(false);
   };
 
-  const filteredCategories = categories.filter((c) => c.type === type);
+  const expenseCategories = categories.filter((c) => c.type === "expense");
 
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Only show expenses
+  const expenses = transactions.filter((t) => t.type === "expense");
+
+  const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Transações</h1>
-          <p className="text-sm text-muted-foreground">Gerencie suas receitas e despesas</p>
+          <h1 className="text-2xl font-bold tracking-tight">Despesas</h1>
+          <p className="text-sm text-muted-foreground">Gerencie suas despesas mensais</p>
         </div>
         <div className="flex items-center gap-3">
           <MonthPicker value={month} onChange={setMonth} />
@@ -54,36 +58,14 @@ export default function Transactions() {
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Nova
+                Nova Despesa
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Nova Transação</DialogTitle>
+                <DialogTitle>Nova Despesa</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={type === "expense" ? "default" : "outline"}
-                    className={type === "expense" ? "bg-expense hover:bg-expense/90" : ""}
-                    onClick={() => setType("expense")}
-                    size="sm"
-                  >
-                    <TrendingDown className="mr-1 h-3 w-3" />
-                    Despesa
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={type === "income" ? "default" : "outline"}
-                    className={type === "income" ? "bg-income hover:bg-income/90" : ""}
-                    onClick={() => setType("income")}
-                    size="sm"
-                  >
-                    <TrendingUp className="mr-1 h-3 w-3" />
-                    Receita
-                  </Button>
-                </div>
                 <div className="space-y-2">
                   <Label>Valor (R$)</Label>
                   <Input name="amount" type="number" step="0.01" min="0.01" required placeholder="0,00" />
@@ -93,7 +75,7 @@ export default function Transactions() {
                   <Select name="category_id" required>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {filteredCategories.map((c) => (
+                      {expenseCategories.map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -109,7 +91,7 @@ export default function Transactions() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch name="is_fixed" id="is_fixed" />
-                  <Label htmlFor="is_fixed" className="text-sm">Despesa fixa</Label>
+                  <Label htmlFor="is_fixed" className="text-sm">Despesa fixa / recorrente</Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={addTransaction.isPending}>
                   Salvar
@@ -120,17 +102,33 @@ export default function Transactions() {
         </div>
       </div>
 
+      {/* Summary */}
+      <Card className="glass-card">
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-expense/10 text-expense">
+              <TrendingDown className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total de despesas no mês</p>
+              <p className="text-lg font-bold text-expense">{formatCurrency(totalExpenses)}</p>
+            </div>
+          </div>
+          <Badge variant="secondary">{expenses.length} lançamentos</Badge>
+        </CardContent>
+      </Card>
+
       <Card className="glass-card">
         <CardContent className="p-0">
-          {transactions.length === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma transação neste mês</p>
+          {expenses.length === 0 ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa neste mês</p>
           ) : (
             <div className="divide-y">
-              {transactions.map((t) => (
+              {expenses.map((t) => (
                 <div key={t.id} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30 sm:px-6">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${t.type === "income" ? "bg-income/10 text-income" : "bg-expense/10 text-expense"}`}>
-                      {t.type === "income" ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-expense/10 text-expense">
+                      <TrendingDown className="h-4 w-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -143,8 +141,8 @@ export default function Transactions() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className={`text-sm font-semibold ${t.type === "income" ? "text-income" : "text-expense"}`}>
-                      {t.type === "income" ? "+" : "-"}{formatCurrency(t.amount)}
+                    <p className="text-sm font-semibold text-expense">
+                      -{formatCurrency(t.amount)}
                     </p>
                     <Button
                       variant="ghost"

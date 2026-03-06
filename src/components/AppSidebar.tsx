@@ -26,6 +26,7 @@ const financeItems = [
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
   { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
   { title: "Invest. Alternativos", url: "/alt-investments", icon: Gamepad2 },
+  { title: "Ganhos & Lucros", url: "/earnings", icon: Wallet },
 ];
 
 const analysisItems = [

@@ -33,6 +33,7 @@ const moreItems = [
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
   { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },
   { title: "Invest. Alternativos", url: "/alt-investments", icon: Gamepad2 },
+  { title: "Ganhos & Lucros", url: "/earnings", icon: Wallet },
   { title: "Saúde Financeira", url: "/financial-health", icon: Heart },
   { title: "Simulador", url: "/simulator", icon: Calculator },
   { title: "Importar CSV", url: "/import", icon: FileSpreadsheet },

@@ -1,23 +1,24 @@
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, Target, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useEarnings } from "@/hooks/useEarnings";
 import { useInvestments } from "@/hooks/useInvestments";
 import { useCrypto } from "@/hooks/useCrypto";
+import { useAltInvestments } from "@/hooks/useAltInvestments";
 import { useCategoryBudgets } from "@/hooks/useCategoryBudgets";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 
-const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#6b7280"];
-
 export default function Analytics() {
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
   const { data: transactions = [] } = useTransactions(month);
+  const { data: earnings = [], allData: allEarnings = [] } = useEarnings(month);
 
-  // Get last 6 months data for evolution chart
+  // Get last 6 months data
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = subMonths(new Date(month + "-01"), 5 - i);
     return format(d, "yyyy-MM");
@@ -33,18 +34,20 @@ export default function Analytics() {
 
   const { data: investments = [] } = useInvestments();
   const { data: cryptoHoldings = [], livePrices } = useCrypto();
+  const { investments: altInvs = [] } = useAltInvestments();
   const { data: budgets = [] } = useCategoryBudgets(month);
 
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  // Current month calcs
-  const income = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  // Income = earnings (BRL)
+  const income = earnings.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
   const expenses = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const balance = income - expenses;
 
   // Investments total
   const investmentTotal = investments.reduce((s, i) => s + i.current_value, 0);
+  const altInvestmentTotal = altInvs.reduce((s, i) => s + i.invested_amount, 0);
 
   // Crypto total
   const getPrice = (symbol: string) => livePrices.data?.[symbol.toLowerCase()]?.brl || 0;
@@ -53,12 +56,16 @@ export default function Analytics() {
     return s + h.quantity * price;
   }, 0);
 
-  const patrimonyTotal = balance + investmentTotal + cryptoTotal;
+  // Total earnings (all time BRL)
+  const totalEarningsBRL = allEarnings.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
 
-  // Evolution chart data
+  const patrimonyTotal = balance + investmentTotal + altInvestmentTotal + cryptoTotal + totalEarningsBRL - income; // avoid double-counting current month earnings
+
+  // Evolution chart data with earnings as income
   const evolutionData = months.map((m, i) => {
     const txs = monthsData[i].data || [];
-    const inc = txs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+    const mEarnings = allEarnings.filter((e) => e.date.startsWith(m) && e.currency === "BRL");
+    const inc = mEarnings.reduce((s, e) => s + e.amount, 0);
     const exp = txs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
     const d = new Date(m + "-01");
     return {
@@ -128,16 +135,17 @@ export default function Analytics() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-primary">{formatCurrency(patrimonyTotal)}</p>
-            <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+            <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span>Saldo: {formatCurrency(balance)}</span>
-              <span>Invest: {formatCurrency(investmentTotal)}</span>
+              <span>Invest: {formatCurrency(investmentTotal + altInvestmentTotal)}</span>
               <span>Crypto: {formatCurrency(cryptoTotal)}</span>
+              <span>Ganhos: {formatCurrency(totalEarningsBRL)}</span>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas (Ganhos)</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-income">{formatCurrency(income)}</p>
@@ -155,7 +163,6 @@ export default function Analytics() {
 
       {/* Charts row */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Evolution */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -172,13 +179,12 @@ export default function Analytics() {
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
                 <Line type="monotone" dataKey="receitas" stroke="hsl(152, 69%, 40%)" strokeWidth={2} dot={{ r: 3 }} name="Receitas" />
                 <Line type="monotone" dataKey="despesas" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3 }} name="Despesas" />
-                <Line type="monotone" dataKey="saldo" stroke="hsl(162, 63%, 41%)" strokeWidth={2} dot={{ r: 3 }} name="Saldo" />
+                <Line type="monotone" dataKey="saldo" stroke="hsl(199, 89%, 48%)" strokeWidth={2} dot={{ r: 3 }} name="Saldo" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Pie */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -246,7 +252,8 @@ export default function Analytics() {
               <Pie
                 data={[
                   { name: "Saldo em Conta", value: Math.max(balance, 0) },
-                  { name: "Investimentos", value: investmentTotal },
+                  { name: "Invest. Tradicionais", value: investmentTotal },
+                  { name: "Invest. Alternativos", value: altInvestmentTotal },
                   { name: "Criptomoedas", value: cryptoTotal },
                 ].filter((d) => d.value > 0)}
                 dataKey="value"
@@ -258,15 +265,17 @@ export default function Analytics() {
               >
                 <Cell fill="hsl(162, 63%, 41%)" />
                 <Cell fill="hsl(199, 89%, 48%)" />
+                <Cell fill="hsl(262, 80%, 50%)" />
                 <Cell fill="hsl(38, 92%, 50%)" />
               </Pie>
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex justify-center gap-6 text-xs text-muted-foreground mt-2">
-            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-primary" />Saldo</div>
-            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-accent" />Investimentos</div>
-            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-warning" />Crypto</div>
+          <div className="flex justify-center flex-wrap gap-4 text-xs text-muted-foreground mt-2">
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(162, 63%, 41%)" }} />Saldo</div>
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(199, 89%, 48%)" }} />Tradicionais</div>
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(262, 80%, 50%)" }} />Alternativos</div>
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(38, 92%, 50%)" }} />Crypto</div>
           </div>
         </CardContent>
       </Card>

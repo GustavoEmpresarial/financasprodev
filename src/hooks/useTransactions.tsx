@@ -12,8 +12,11 @@ export type Transaction = {
   description: string | null;
   date: string;
   is_fixed: boolean;
+  payment_method: string;
+  credit_card_id: string | null;
   created_at: string;
   categories?: { name: string; icon: string | null; color: string | null } | null;
+  credit_cards?: { name: string; color: string | null } | null;
 };
 
 export function useTransactions(month?: string) {
@@ -32,9 +35,9 @@ export function useTransactions(month?: string) {
   const query = useQuery({
     queryKey: ["transactions", user?.id, month],
     queryFn: async () => {
-      let q = supabase
+      let q = (supabase as any)
         .from("transactions")
-        .select("*, categories(name, icon, color)")
+        .select("*, categories(name, icon, color), credit_cards(name, color)")
         .order("date", { ascending: false });
 
       if (startOfMonth && endOfMonth) {
@@ -56,28 +59,33 @@ export function useTransactions(month?: string) {
       description?: string;
       date: string;
       is_fixed: boolean;
+      payment_method: string;
+      credit_card_id?: string | null;
     }) => {
-      const { error } = await supabase.from("transactions").insert({
+      const { error } = await (supabase as any).from("transactions").insert({
         ...tx,
+        credit_card_id: tx.credit_card_id || null,
         user_id: user!.id,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transação registrada!");
+      queryClient.invalidateQueries({ queryKey: ["credit_cards"] });
+      toast.success("Despesa registrada!");
     },
     onError: (err: any) => toast.error(err.message),
   });
 
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("transactions").delete().eq("id", id);
+      const { error } = await (supabase as any).from("transactions").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast.success("Transação removida!");
+      queryClient.invalidateQueries({ queryKey: ["credit_cards"] });
+      toast.success("Despesa removida!");
     },
     onError: (err: any) => toast.error(err.message),
   });

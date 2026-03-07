@@ -99,12 +99,13 @@ export function VoiceAssistant() {
     }
 
     await addTransaction.mutateAsync({
-      type: parsed.type,
+      type: "expense",
       amount: parsed.amount,
       category_id: cat.id,
       description: parsed.description || transcript,
       date: parsed.date,
       is_fixed: false,
+      payment_method: "pix",
     });
 
     setParsed(null);

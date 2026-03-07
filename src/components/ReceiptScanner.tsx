@@ -76,6 +76,7 @@ export function ReceiptScanner() {
       description: parsed.description || parsed.merchant,
       date: parsed.date,
       is_fixed: false,
+      payment_method: "pix",
     });
 
     setParsed(null);

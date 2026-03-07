@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { useTransactions } from "./useTransactions";
 
 export type CreditCard = {
   id: string;
@@ -13,6 +12,8 @@ export type CreditCard = {
   closing_day: number;
   due_day: number;
   color: string | null;
+  card_type: string;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -70,5 +71,16 @@ export function useCreditCards() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  return { ...query, addCard, updateCard, deleteCard };
+  const uploadCardImage = async (cardId: string, file: File) => {
+    if (!user) throw new Error("Não autenticado");
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${cardId}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("card-images").upload(path, file, { upsert: true });
+    if (uploadError) throw uploadError;
+    const { data: urlData } = supabase.storage.from("card-images").getPublicUrl(path);
+    await updateCard.mutateAsync({ id: cardId, image_url: urlData.publicUrl });
+    return urlData.publicUrl;
+  };
+
+  return { ...query, addCard, updateCard, deleteCard, uploadCardImage };
 }

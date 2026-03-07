@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Plus, Trash2, TrendingDown } from "lucide-react";
+import { Plus, Trash2, TrendingDown, CreditCard } from "lucide-react";
 import { ReceiptScanner } from "@/components/ReceiptScanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from "@/components/ui/switch";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions, useCategories } from "@/hooks/useTransactions";
+import { useCreditCards } from "@/hooks/useCreditCards";
 import { Badge } from "@/components/ui/badge";
+
+const PAYMENT_METHODS = [
+  { value: "pix", label: "Pix" },
+  { value: "cash", label: "Dinheiro" },
+  { value: "debit", label: "Débito" },
+  { value: "credit_card", label: "Cartão de Crédito" },
+  { value: "transfer", label: "Transferência" },
+];
 
 export default function Transactions() {
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
   const { data: transactions = [], deleteTransaction } = useTransactions(month);
   const { data: categories = [] } = useCategories();
   const { addTransaction } = useTransactions(month);
+  const { data: cards = [] } = useCreditCards();
   const [open, setOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("pix");
+  const [selectedCardId, setSelectedCardId] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,8 +42,12 @@ export default function Transactions() {
       description: (form.get("description") as string) || undefined,
       date: form.get("date") as string,
       is_fixed: form.get("is_fixed") === "on",
+      payment_method: paymentMethod,
+      credit_card_id: paymentMethod === "credit_card" ? selectedCardId || null : null,
     });
     setOpen(false);
+    setPaymentMethod("pix");
+    setSelectedCardId("");
   };
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
@@ -39,10 +55,10 @@ export default function Transactions() {
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  // Only show expenses
   const expenses = transactions.filter((t) => t.type === "expense");
-
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+
+  const getMethodLabel = (m: string) => PAYMENT_METHODS.find((p) => p.value === m)?.label || m;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -54,7 +70,7 @@ export default function Transactions() {
         <div className="flex items-center gap-3">
           <MonthPicker value={month} onChange={setMonth} />
           <ReceiptScanner />
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setPaymentMethod("pix"); setSelectedCardId(""); } }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
@@ -67,11 +83,11 @@ export default function Transactions() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Valor (R$)</Label>
+                  <Label>Valor (R$) *</Label>
                   <Input name="amount" type="number" step="0.01" min="0.01" required placeholder="0,00" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Categoria</Label>
+                  <Label>Categoria *</Label>
                   <Select name="category_id" required>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
@@ -82,7 +98,31 @@ export default function Transactions() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Data</Label>
+                  <Label>Método de Pagamento *</Label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {paymentMethod === "credit_card" && (
+                  <div className="space-y-2">
+                    <Label>Cartão *</Label>
+                    <Select value={selectedCardId} onValueChange={setSelectedCardId} required>
+                      <SelectTrigger><SelectValue placeholder="Selecione o cartão..." /></SelectTrigger>
+                      <SelectContent>
+                        {cards.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name} {c.brand ? `(${c.brand})` : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>Data *</Label>
                   <Input name="date" type="date" required defaultValue={format(new Date(), "yyyy-MM-dd")} />
                 </div>
                 <div className="space-y-2">
@@ -93,7 +133,7 @@ export default function Transactions() {
                   <Switch name="is_fixed" id="is_fixed" />
                   <Label htmlFor="is_fixed" className="text-sm">Despesa fixa / recorrente</Label>
                 </div>
-                <Button type="submit" className="w-full" disabled={addTransaction.isPending}>
+                <Button type="submit" className="w-full" disabled={addTransaction.isPending || (paymentMethod === "credit_card" && !selectedCardId)}>
                   Salvar
                 </Button>
               </form>
@@ -124,7 +164,7 @@ export default function Transactions() {
             <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa neste mês</p>
           ) : (
             <div className="divide-y">
-              {expenses.map((t) => (
+              {expenses.map((t: any) => (
                 <div key={t.id} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30 sm:px-6">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-expense/10 text-expense">
@@ -136,7 +176,12 @@ export default function Transactions() {
                         {t.is_fixed && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Fixa</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {t.description ? `${t.description} · ` : ""}{format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy")}
+                        {t.description ? `${t.description} · ` : ""}
+                        {format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy")}
+                        {t.payment_method && ` · ${getMethodLabel(t.payment_method)}`}
+                        {t.credit_cards?.name && (
+                          <span className="ml-1 text-primary">({t.credit_cards.name})</span>
+                        )}
                       </p>
                     </div>
                   </div>

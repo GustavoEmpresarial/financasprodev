@@ -1,22 +1,26 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions } from "@/hooks/useTransactions";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { useEarnings } from "@/hooks/useEarnings";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899", "#6b7280"];
 
 export default function Dashboard() {
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
-  const { data: transactions = [], isLoading } = useTransactions(month);
+  const { data: transactions = [] } = useTransactions(month);
+  const { data: earnings = [] } = useEarnings(month);
 
-  const income = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+  // Income = earnings (BRL only for dashboard)
+  const income = earnings.filter((e) => e.currency === "BRL").reduce((sum, e) => sum + e.amount, 0);
+  // Expenses from transactions
   const expenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
   const balance = income - expenses;
 
-  // Category breakdown for pie chart
+  // Category breakdown for pie chart (expenses)
   const categoryMap = new Map<string, { name: string; value: number; color: string }>();
   transactions
     .filter((t) => t.type === "expense")
@@ -39,6 +43,27 @@ export default function Dashboard() {
 
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Recent activity: merge expenses + earnings
+  const recentExpenses = transactions.filter((t) => t.type === "expense").slice(0, 5).map((t) => ({
+    id: t.id,
+    type: "expense" as const,
+    label: t.categories?.name || "Sem categoria",
+    description: t.description || format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy"),
+    amount: t.amount,
+    date: t.date,
+  }));
+  const recentEarnings = earnings.slice(0, 5).map((e) => ({
+    id: e.id,
+    type: "income" as const,
+    label: e.source_name,
+    description: e.description || format(new Date(e.date + "T12:00:00"), "dd/MM/yyyy"),
+    amount: e.amount,
+    date: e.date,
+  }));
+  const recentAll = [...recentExpenses, ...recentEarnings]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -66,7 +91,7 @@ export default function Dashboard() {
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas (Ganhos)</CardTitle>
             <ArrowUpRight className="h-4 w-4 text-income" />
           </CardHeader>
           <CardContent>
@@ -93,7 +118,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {income === 0 && expenses === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma transação neste mês</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma movimentação neste mês</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={barData}>
@@ -148,22 +173,22 @@ export default function Dashboard() {
       {/* Recent transactions */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Transações Recentes</CardTitle>
+          <CardTitle className="text-base font-semibold">Movimentações Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          {transactions.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma transação encontrada</p>
+          {recentAll.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma movimentação encontrada</p>
           ) : (
             <div className="space-y-3">
-              {transactions.slice(0, 5).map((t) => (
+              {recentAll.map((t) => (
                 <div key={t.id} className="flex items-center justify-between rounded-lg border bg-background/50 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${t.type === "income" ? "bg-income/10 text-income" : "bg-expense/10 text-expense"}`}>
                       {t.type === "income" ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{t.categories?.name || "Sem categoria"}</p>
-                      <p className="text-xs text-muted-foreground">{t.description || format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy")}</p>
+                      <p className="text-sm font-medium">{t.label}</p>
+                      <p className="text-xs text-muted-foreground">{t.description}</p>
                     </div>
                   </div>
                   <p className={`text-sm font-semibold ${t.type === "income" ? "text-income" : "text-expense"}`}>

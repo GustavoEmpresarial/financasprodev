@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          from_account_id: string
+          id: string
+          to_account_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_account_id: string
+          id?: string
+          to_account_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_account_id?: string
+          id?: string
+          to_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_transfers_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_transfers_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alt_investment_earnings: {
         Row: {
           amount: number
@@ -356,10 +404,56 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          account_type: string
+          balance: number
+          color: string | null
+          created_at: string
+          currency: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          balance?: number
+          color?: string | null
+          created_at?: string
+          currency?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          balance?: number
+          color?: string | null
+          created_at?: string
+          currency?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
+          color: string | null
           created_at: string
           current_amount: number
+          deadline: string | null
+          goal_type: string | null
+          icon: string | null
           id: string
           month: string
           target_amount: number
@@ -368,8 +462,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           current_amount?: number
+          deadline?: string | null
+          goal_type?: string | null
+          icon?: string | null
           id?: string
           month: string
           target_amount: number
@@ -378,8 +476,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           current_amount?: number
+          deadline?: string | null
+          goal_type?: string | null
+          icon?: string | null
           id?: string
           month?: string
           target_amount?: number
@@ -464,6 +566,72 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_subscriptions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category_id: string | null
+          color: string | null
+          created_at: string
+          frequency: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          next_billing_date: string | null
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          frequency?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          next_billing_date?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          frequency?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          next_billing_date?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_subscriptions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_subscriptions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -499,6 +667,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          account_id: string | null
           amount: number
           category_id: string | null
           created_at: string
@@ -506,6 +675,9 @@ export type Database = {
           date: string
           description: string | null
           id: string
+          installment_count: number | null
+          installment_group: string | null
+          installment_number: number | null
           is_fixed: boolean
           payment_method: string
           type: string
@@ -513,6 +685,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           amount: number
           category_id?: string | null
           created_at?: string
@@ -520,6 +693,9 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          installment_count?: number | null
+          installment_group?: string | null
+          installment_number?: number | null
           is_fixed?: boolean
           payment_method?: string
           type: string
@@ -527,6 +703,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           amount?: number
           category_id?: string | null
           created_at?: string
@@ -534,6 +711,9 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          installment_count?: number | null
+          installment_group?: string | null
+          installment_number?: number | null
           is_fixed?: boolean
           payment_method?: string
           type?: string
@@ -541,6 +721,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_category_id_fkey"
             columns: ["category_id"]

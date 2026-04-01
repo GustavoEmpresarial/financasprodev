@@ -1,14 +1,25 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Plus, Trash2, Target } from "lucide-react";
+import { Plus, Trash2, Target, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { MonthPicker } from "@/components/MonthPicker";
+import { Badge } from "@/components/ui/badge";
 import { useGoals } from "@/hooks/useGoals";
+
+const GOAL_TYPES = [
+  { value: "savings", label: "Economia / Poupança" },
+  { value: "emergency", label: "Reserva de Emergência" },
+  { value: "purchase", label: "Compra (carro, casa, etc.)" },
+  { value: "travel", label: "Viagem" },
+  { value: "investment", label: "Investimento" },
+  { value: "debt", label: "Quitar Dívida" },
+  { value: "other", label: "Outro" },
+];
 
 export default function Goals() {
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -26,48 +37,42 @@ export default function Goals() {
     setOpen(false);
   };
 
-  const formatCurrency = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const handleAddAmount = async (goal: any) => {
     const input = prompt("Quanto deseja adicionar? (R$)");
     if (!input) return;
     const amount = parseFloat(input);
     if (isNaN(amount) || amount <= 0) return;
-    await updateGoal.mutateAsync({
-      id: goal.id,
-      current_amount: goal.current_amount + amount,
-    });
+    await updateGoal.mutateAsync({ id: goal.id, current_amount: goal.current_amount + amount });
   };
+
+  const totalTarget = goals.reduce((s, g) => s + g.target_amount, 0);
+  const totalCurrent = goals.reduce((s, g) => s + g.current_amount, 0);
+  const overallPct = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Metas Financeiras</h1>
-          <p className="text-sm text-muted-foreground">Defina e acompanhe suas metas</p>
+          <p className="text-sm text-muted-foreground">Defina objetivos e acompanhe seu progresso</p>
         </div>
         <div className="flex items-center gap-3">
-          <MonthPicker value={month} onChange={setMonth} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Meta
-              </Button>
+              <Button size="sm"><Plus className="mr-2 h-4 w-4" />Nova Meta</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Meta</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Nova Meta</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Título</Label>
-                  <Input name="title" required placeholder="Ex: Guardar para viagem" />
+                  <Label>Título *</Label>
+                  <Input name="title" required placeholder="Ex: Reserva de emergência" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor alvo (R$)</Label>
-                  <Input name="target_amount" type="number" step="0.01" min="0.01" required placeholder="1000,00" />
+                  <Label>Valor alvo (R$) *</Label>
+                  <Input name="target_amount" type="number" step="0.01" min="0.01" required />
                 </div>
                 <Button type="submit" className="w-full" disabled={addGoal.isPending}>Criar Meta</Button>
               </form>
@@ -76,11 +81,32 @@ export default function Goals() {
         </div>
       </div>
 
+      {/* Overall progress */}
+      {goals.length > 0 && (
+        <Card className="glass-card">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Target className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Progresso geral</p>
+                  <p className="text-lg font-bold">{formatCurrency(totalCurrent)} de {formatCurrency(totalTarget)}</p>
+                </div>
+              </div>
+              <Badge variant="secondary">{overallPct.toFixed(0)}%</Badge>
+            </div>
+            <Progress value={Math.min(overallPct, 100)} className="h-2" />
+          </CardContent>
+        </Card>
+      )}
+
       {goals.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="py-12 text-center">
             <Target className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Nenhuma meta para este mês</p>
+            <p className="text-sm text-muted-foreground">Nenhuma meta criada ainda</p>
           </CardContent>
         </Card>
       ) : (
@@ -97,12 +123,7 @@ export default function Goals() {
                       {formatCurrency(goal.current_amount)} de {formatCurrency(goal.target_amount)}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-expense"
-                    onClick={() => deleteGoal.mutate(goal.id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-expense" onClick={() => deleteGoal.mutate(goal.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </CardHeader>

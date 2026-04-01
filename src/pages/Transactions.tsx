@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Plus, Trash2, TrendingDown, CreditCard } from "lucide-react";
+import { Plus, Trash2, TrendingDown, Download } from "lucide-react";
 import { ReceiptScanner } from "@/components/ReceiptScanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions, useCategories } from "@/hooks/useTransactions";
 import { useCreditCards } from "@/hooks/useCreditCards";
+import { useAccounts } from "@/hooks/useAccounts";
 import { Badge } from "@/components/ui/badge";
 
 const PAYMENT_METHODS = [
@@ -28,37 +29,85 @@ export default function Transactions() {
   const { data: categories = [] } = useCategories();
   const { addTransaction } = useTransactions(month);
   const { data: cards = [] } = useCreditCards();
+  const { data: accounts = [] } = useAccounts();
   const [open, setOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("pix");
-  const [selectedCardId, setSelectedCardId] = useState<string>("");
+  const [selectedCardId, setSelectedCardId] = useState("");
+  const [installmentCount, setInstallmentCount] = useState("1");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    await addTransaction.mutateAsync({
-      type: "expense",
-      amount: parseFloat(form.get("amount") as string),
-      category_id: form.get("category_id") as string,
-      description: (form.get("description") as string) || undefined,
-      date: form.get("date") as string,
-      is_fixed: form.get("is_fixed") === "on",
-      payment_method: paymentMethod,
-      credit_card_id: paymentMethod === "credit_card" ? selectedCardId || null : null,
-    });
+    const totalAmount = parseFloat(form.get("amount") as string);
+    const numInstallments = parseInt(installmentCount) || 1;
+    const baseDate = form.get("date") as string;
+    const categoryId = form.get("category_id") as string;
+    const description = (form.get("description") as string) || undefined;
+    const isFixed = form.get("is_fixed") === "on";
+    const accountId = (form.get("account_id") as string) || null;
+    const creditCardId = paymentMethod === "credit_card" ? selectedCardId || null : null;
+
+    if (numInstallments > 1 && paymentMethod === "credit_card") {
+      // Create installment group
+      const groupId = crypto.randomUUID();
+      const installmentAmount = Math.round((totalAmount / numInstallments) * 100) / 100;
+      for (let i = 0; i < numInstallments; i++) {
+        const [y, m, d] = baseDate.split("-").map(Number);
+        const installmentDate = new Date(y, m - 1 + i, d);
+        const dateStr = format(installmentDate, "yyyy-MM-dd");
+        await addTransaction.mutateAsync({
+          type: "expense",
+          amount: installmentAmount,
+          category_id: categoryId,
+          description: description ? `${description} (${i + 1}/${numInstallments})` : `Parcela ${i + 1}/${numInstallments}`,
+          date: dateStr,
+          is_fixed: isFixed,
+          payment_method: paymentMethod,
+          credit_card_id: creditCardId,
+        });
+      }
+    } else {
+      await addTransaction.mutateAsync({
+        type: "expense",
+        amount: totalAmount,
+        category_id: categoryId,
+        description,
+        date: baseDate,
+        is_fixed: isFixed,
+        payment_method: paymentMethod,
+        credit_card_id: creditCardId,
+      });
+    }
     setOpen(false);
     setPaymentMethod("pix");
     setSelectedCardId("");
+    setInstallmentCount("1");
   };
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
-
-  const formatCurrency = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
+  const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const expenses = transactions.filter((t) => t.type === "expense");
   const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-
   const getMethodLabel = (m: string) => PAYMENT_METHODS.find((p) => p.value === m)?.label || m;
+
+  const handleExportCSV = () => {
+    const headers = ["Data", "Categoria", "Descrição", "Método", "Valor"];
+    const rows = expenses.map(t => [
+      format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy"),
+      t.categories?.name || "Sem categoria",
+      t.description || "",
+      getMethodLabel(t.payment_method),
+      t.amount.toFixed(2),
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `despesas_${month}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -67,20 +116,18 @@ export default function Transactions() {
           <h1 className="text-2xl font-bold tracking-tight">Despesas</h1>
           <p className="text-sm text-muted-foreground">Gerencie suas despesas mensais</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <MonthPicker value={month} onChange={setMonth} />
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={expenses.length === 0}>
+            <Download className="mr-2 h-4 w-4" />CSV
+          </Button>
           <ReceiptScanner />
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setPaymentMethod("pix"); setSelectedCardId(""); } }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setPaymentMethod("pix"); setSelectedCardId(""); setInstallmentCount("1"); } }}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Despesa
-              </Button>
+              <Button size="sm"><Plus className="mr-2 h-4 w-4" />Nova Despesa</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Despesa</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Nova Despesa</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Valor (R$) *</Label>
@@ -91,9 +138,7 @@ export default function Transactions() {
                   <Select name="category_id" required>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {expenseCategories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
+                      {expenseCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -102,21 +147,41 @@ export default function Transactions() {
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {PAYMENT_METHODS.map((p) => (
-                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                      ))}
+                      {PAYMENT_METHODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 {paymentMethod === "credit_card" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Cartão *</Label>
+                      <Select value={selectedCardId} onValueChange={setSelectedCardId} required>
+                        <SelectTrigger><SelectValue placeholder="Selecione o cartão..." /></SelectTrigger>
+                        <SelectContent>
+                          {cards.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} {c.brand ? `(${c.brand})` : ""}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Parcelas</Label>
+                      <Select value={installmentCount} onValueChange={setInstallmentCount}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map(n => (
+                            <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+                {accounts.length > 0 && paymentMethod !== "credit_card" && (
                   <div className="space-y-2">
-                    <Label>Cartão *</Label>
-                    <Select value={selectedCardId} onValueChange={setSelectedCardId} required>
-                      <SelectTrigger><SelectValue placeholder="Selecione o cartão..." /></SelectTrigger>
+                    <Label>Conta (opcional)</Label>
+                    <Select name="account_id">
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
-                        {cards.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name} {c.brand ? `(${c.brand})` : ""}</SelectItem>
-                        ))}
+                        {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -134,7 +199,7 @@ export default function Transactions() {
                   <Label htmlFor="is_fixed" className="text-sm">Despesa fixa / recorrente</Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={addTransaction.isPending || (paymentMethod === "credit_card" && !selectedCardId)}>
-                  Salvar
+                  {parseInt(installmentCount) > 1 ? `Salvar em ${installmentCount}x` : "Salvar"}
                 </Button>
               </form>
             </DialogContent>
@@ -174,6 +239,11 @@ export default function Transactions() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">{t.categories?.name || "Sem categoria"}</p>
                         {t.is_fixed && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Fixa</Badge>}
+                        {t.installment_count > 1 && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {t.installment_number}/{t.installment_count}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {t.description ? `${t.description} · ` : ""}
@@ -186,15 +256,8 @@ export default function Transactions() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className="text-sm font-semibold text-expense">
-                      -{formatCurrency(t.amount)}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-expense"
-                      onClick={() => deleteTransaction.mutate(t.id)}
-                    >
+                    <p className="text-sm font-semibold text-expense">-{formatCurrency(t.amount)}</p>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-expense" onClick={() => deleteTransaction.mutate(t.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>

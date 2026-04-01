@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle, Building2, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useEarnings } from "@/hooks/useEarnings";
@@ -10,7 +11,9 @@ import { useInvestments } from "@/hooks/useInvestments";
 import { useCrypto } from "@/hooks/useCrypto";
 import { useAltInvestments } from "@/hooks/useAltInvestments";
 import { useCategoryBudgets } from "@/hooks/useCategoryBudgets";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useCreditCards } from "@/hooks/useCreditCards";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
 import { Badge } from "@/components/ui/badge";
 
 export default function Analytics() {
@@ -18,7 +21,6 @@ export default function Analytics() {
   const { data: transactions = [] } = useTransactions(month);
   const { data: earnings = [], allData: allEarnings = [] } = useEarnings(month);
 
-  // Get last 6 months data
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = subMonths(new Date(month + "-01"), 5 - i);
     return format(d, "yyyy-MM");
@@ -36,44 +38,34 @@ export default function Analytics() {
   const { data: cryptoHoldings = [], livePrices } = useCrypto();
   const { investments: altInvs = [] } = useAltInvestments();
   const { data: budgets = [] } = useCategoryBudgets(month);
+  const { data: accounts = [] } = useAccounts();
+  const { data: cards = [] } = useCreditCards();
 
-  const formatCurrency = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  // Income = earnings (BRL)
   const income = earnings.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
   const expenses = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
-  const balance = income - expenses;
 
-  // Investments total
+  // Net worth
+  const accountsBalance = accounts.reduce((s, a) => s + a.balance, 0);
   const investmentTotal = investments.reduce((s, i) => s + i.current_value, 0);
   const altInvestmentTotal = altInvs.reduce((s, i) => s + i.invested_amount, 0);
-
-  // Crypto total
   const getPrice = (symbol: string) => livePrices.data?.[symbol.toLowerCase()]?.brl || 0;
-  const cryptoTotal = cryptoHoldings.reduce((s, h) => {
-    const price = getPrice(h.symbol) || h.current_price;
-    return s + h.quantity * price;
+  const cryptoTotal = cryptoHoldings.reduce((s, h) => s + h.quantity * (getPrice(h.symbol) || h.current_price), 0);
+  const cardDebt = cards.reduce((s, c) => {
+    const used = transactions.filter((t: any) => t.type === "expense" && t.credit_card_id === c.id).reduce((sum: number, t: any) => sum + t.amount, 0);
+    return s + used;
   }, 0);
+  const netWorth = accountsBalance + investmentTotal + altInvestmentTotal + cryptoTotal - cardDebt;
 
-  // Total earnings (all time BRL)
-  const totalEarningsBRL = allEarnings.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
-
-  const patrimonyTotal = balance + investmentTotal + altInvestmentTotal + cryptoTotal + totalEarningsBRL - income; // avoid double-counting current month earnings
-
-  // Evolution chart data with earnings as income
+  // Evolution data
   const evolutionData = months.map((m, i) => {
     const txs = monthsData[i].data || [];
     const mEarnings = allEarnings.filter((e) => e.date.startsWith(m) && e.currency === "BRL");
     const inc = mEarnings.reduce((s, e) => s + e.amount, 0);
     const exp = txs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
     const d = new Date(m + "-01");
-    return {
-      month: format(d, "MMM", { locale: ptBR }),
-      receitas: inc,
-      despesas: exp,
-      saldo: inc - exp,
-    };
+    return { month: format(d, "MMM", { locale: ptBR }), receitas: inc, despesas: exp, saldo: inc - exp };
   });
 
   // Category breakdown
@@ -90,13 +82,30 @@ export default function Analytics() {
   // Budget alerts
   const budgetAlerts = budgets
     .map((b) => {
-      const spent = transactions
-        .filter((t) => t.type === "expense" && t.category_id === b.category_id)
-        .reduce((s, t) => s + t.amount, 0);
+      const spent = transactions.filter((t) => t.type === "expense" && t.category_id === b.category_id).reduce((s, t) => s + t.amount, 0);
       const pct = b.budget_amount > 0 ? (spent / b.budget_amount) * 100 : 0;
       return { ...b, spent, pct };
     })
     .filter((b) => b.pct >= 80);
+
+  // Export
+  const handleExportJSON = () => {
+    const data = {
+      month,
+      netWorth,
+      accounts: accounts.map(a => ({ name: a.name, type: a.account_type, balance: a.balance })),
+      investments: investments.map(i => ({ name: i.name, type: i.type, invested: i.invested_amount, current: i.current_value })),
+      transactions: transactions.map(t => ({ date: t.date, type: t.type, amount: t.amount, category: t.categories?.name, description: t.description })),
+      earnings: earnings.map(e => ({ date: e.date, source: e.source_name, amount: e.amount })),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `financas_${month}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -105,7 +114,12 @@ export default function Analytics() {
           <h1 className="text-2xl font-bold tracking-tight">Painel Analítico</h1>
           <p className="text-sm text-muted-foreground">Indicadores financeiros e análise comparativa</p>
         </div>
-        <MonthPicker value={month} onChange={setMonth} />
+        <div className="flex items-center gap-3">
+          <MonthPicker value={month} onChange={setMonth} />
+          <Button size="sm" variant="outline" onClick={handleExportJSON}>
+            <Download className="mr-2 h-4 w-4" />Exportar
+          </Button>
+        </div>
       </div>
 
       {/* Alerts */}
@@ -125,27 +139,27 @@ export default function Analytics() {
         </Card>
       )}
 
-      {/* Patrimony */}
+      {/* Patrimony & Summary */}
       <div className="grid gap-4 sm:grid-cols-4">
         <Card className="glass-card sm:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Wallet className="h-4 w-4" /> Patrimônio Total
+              <Building2 className="h-4 w-4" /> Patrimônio Líquido
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-primary">{formatCurrency(patrimonyTotal)}</p>
+            <p className="text-3xl font-bold text-primary">{formatCurrency(netWorth)}</p>
             <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <span>Saldo: {formatCurrency(balance)}</span>
+              <span>Contas: {formatCurrency(accountsBalance)}</span>
               <span>Invest: {formatCurrency(investmentTotal + altInvestmentTotal)}</span>
               <span>Crypto: {formatCurrency(cryptoTotal)}</span>
-              <span>Ganhos: {formatCurrency(totalEarningsBRL)}</span>
+              {cardDebt > 0 && <span className="text-expense">Dívida: -{formatCurrency(cardDebt)}</span>}
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas (Ganhos)</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-income">{formatCurrency(income)}</p>
@@ -161,26 +175,25 @@ export default function Analytics() {
         </Card>
       </div>
 
-      {/* Charts row */}
+      {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              Evolução Mensal (6 meses)
+              <BarChart3 className="h-4 w-4 text-primary" />Evolução Mensal (6 meses)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={evolutionData}>
+              <AreaChart data={evolutionData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" fontSize={12} />
                 <YAxis fontSize={12} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                <Line type="monotone" dataKey="receitas" stroke="hsl(152, 69%, 40%)" strokeWidth={2} dot={{ r: 3 }} name="Receitas" />
-                <Line type="monotone" dataKey="despesas" stroke="hsl(0, 72%, 51%)" strokeWidth={2} dot={{ r: 3 }} name="Despesas" />
+                <Area type="monotone" dataKey="receitas" stroke="hsl(152, 69%, 40%)" fill="hsl(152, 69%, 40%)" fillOpacity={0.1} strokeWidth={2} name="Receitas" />
+                <Area type="monotone" dataKey="despesas" stroke="hsl(0, 72%, 51%)" fill="hsl(0, 72%, 51%)" fillOpacity={0.1} strokeWidth={2} name="Despesas" />
                 <Line type="monotone" dataKey="saldo" stroke="hsl(199, 89%, 48%)" strokeWidth={2} dot={{ r: 3 }} name="Saldo" />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -188,8 +201,7 @@ export default function Analytics() {
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <PieIcon className="h-4 w-4 text-primary" />
-              Gastos por Categoria
+              <PieIcon className="h-4 w-4 text-primary" />Gastos por Categoria
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -200,9 +212,7 @@ export default function Analytics() {
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={50}>
-                      {pieData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
+                      {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip formatter={(v: number) => formatCurrency(v)} />
                   </PieChart>
@@ -224,9 +234,7 @@ export default function Analytics() {
 
       {/* Comparative bar */}
       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Comparativo Mensal</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base font-semibold">Comparativo Mensal</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={evolutionData}>
@@ -243,25 +251,18 @@ export default function Analytics() {
 
       {/* Patrimony breakdown */}
       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Composição do Patrimônio</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base font-semibold">Composição do Patrimônio</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
                 data={[
-                  { name: "Saldo em Conta", value: Math.max(balance, 0) },
+                  { name: "Saldo em Contas", value: Math.max(accountsBalance, 0) },
                   { name: "Invest. Tradicionais", value: investmentTotal },
                   { name: "Invest. Alternativos", value: altInvestmentTotal },
                   { name: "Criptomoedas", value: cryptoTotal },
                 ].filter((d) => d.value > 0)}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                innerRadius={45}
+                dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45}
               >
                 <Cell fill="hsl(162, 63%, 41%)" />
                 <Cell fill="hsl(199, 89%, 48%)" />
@@ -272,7 +273,7 @@ export default function Analytics() {
             </PieChart>
           </ResponsiveContainer>
           <div className="flex justify-center flex-wrap gap-4 text-xs text-muted-foreground mt-2">
-            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(162, 63%, 41%)" }} />Saldo</div>
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(162, 63%, 41%)" }} />Contas</div>
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(199, 89%, 48%)" }} />Tradicionais</div>
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(262, 80%, 50%)" }} />Alternativos</div>
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(38, 92%, 50%)" }} />Crypto</div>

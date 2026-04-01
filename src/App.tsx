@@ -21,6 +21,8 @@ import Simulator from "./pages/Simulator";
 import ImportCSV from "./pages/ImportCSV";
 import AltInvestments from "./pages/AltInvestments";
 import Earnings from "./pages/Earnings";
+import Accounts from "./pages/Accounts";
+import Subscriptions from "./pages/Subscriptions";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 

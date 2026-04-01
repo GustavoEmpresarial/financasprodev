@@ -19,19 +19,23 @@ import {
   Calculator,
   FileSpreadsheet,
   Target,
+  Building2,
+  RefreshCw,
 } from "lucide-react";
 
 const primaryItems = [
   { title: "Home", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Contas", url: "/accounts", icon: Building2 },
   { title: "Despesas", url: "/transactions", icon: ArrowDownUp },
-  { title: "Ganhos", url: "/earnings", icon: Wallet },
   { title: "Análise", url: "/analytics", icon: BarChart3 },
 ];
 
 const moreItems = [
+  { title: "Ganhos", url: "/earnings", icon: Wallet },
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
   { title: "Contas a Pagar", url: "/bills", icon: Receipt },
   { title: "Cartões", url: "/credit-cards", icon: CreditCard },
+  { title: "Assinaturas", url: "/subscriptions", icon: RefreshCw },
   { title: "Metas", url: "/goals", icon: Target },
   { title: "Saúde Financeira", url: "/financial-health", icon: Heart },
   { title: "Criptomoedas", url: "/crypto", icon: Bitcoin },

@@ -53,6 +53,8 @@ function AppRoutes() {
       <Route path="/import" element={<ProtectedRoute><ImportCSV /></ProtectedRoute>} />
       <Route path="/alt-investments" element={<ProtectedRoute><AltInvestments /></ProtectedRoute>} />
       <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
+      <Route path="/accounts" element={<ProtectedRoute><Accounts /></ProtectedRoute>} />
+      <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Building2, AlertTriangle, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Building2, AlertTriangle, RefreshCw, ArrowUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useEarnings } from "@/hooks/useEarnings";
@@ -11,6 +12,7 @@ import { useInvestments } from "@/hooks/useInvestments";
 import { useCrypto } from "@/hooks/useCrypto";
 import { useAltInvestments } from "@/hooks/useAltInvestments";
 import { useCreditCards } from "@/hooks/useCreditCards";
+import { useCurrency } from "@/hooks/useCurrency";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,6 +26,7 @@ export default function Dashboard() {
   const { data: cryptoHoldings = [], livePrices } = useCrypto();
   const { investments: altInvs = [] } = useAltInvestments();
   const { data: cards = [] } = useCreditCards();
+  const { format: fmt, formatCompact, mode, toggleMode, convert } = useCurrency();
 
   const income = earnings.filter((e) => e.currency === "BRL").reduce((sum, e) => sum + e.amount, 0);
   const expenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
@@ -62,34 +65,32 @@ export default function Dashboard() {
   const pieData = Array.from(categoryMap.values());
 
   const barData = [
-    { name: "Receitas", valor: income },
-    { name: "Despesas", valor: expenses },
+    { name: "Income", valor: income },
+    { name: "Expenses", valor: expenses },
   ];
-
-  const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   // Insights
   const insights: { type: "warning" | "success" | "info"; message: string }[] = [];
-  if (expenses > income && income > 0) insights.push({ type: "warning", message: `Despesas excedem receitas em ${formatCurrency(expenses - income)}` });
+  if (expenses > income && income > 0) insights.push({ type: "warning", message: `Expenses exceed income by ${fmt(expenses - income)}` });
   if (cardDebt > 0) {
     const totalLimit = cards.reduce((s, c) => s + c.total_limit, 0);
     const usePct = totalLimit > 0 ? (cardDebt / totalLimit) * 100 : 0;
-    if (usePct > 70) insights.push({ type: "warning", message: `Uso de ${usePct.toFixed(0)}% do limite dos cartões` });
+    if (usePct > 70) insights.push({ type: "warning", message: `Card limit usage: ${usePct.toFixed(0)}%` });
   }
   if (balance > 0 && income > 0) {
     const savingsRate = (balance / income) * 100;
-    if (savingsRate > 30) insights.push({ type: "success", message: `Excelente! Você economizou ${savingsRate.toFixed(0)}% da renda` });
+    if (savingsRate > 30) insights.push({ type: "success", message: `Great! You saved ${savingsRate.toFixed(0)}% of income` });
   }
-  if (monthlySubsCost > 0) insights.push({ type: "info", message: `Assinaturas: ${formatCurrency(monthlySubsCost)}/mês (${activeSubs.length} ativas)` });
+  if (monthlySubsCost > 0) insights.push({ type: "info", message: `Subscriptions: ${fmt(monthlySubsCost)}/mo (${activeSubs.length} active)` });
 
   // Recent activity
   const recentExpenses = transactions.filter((t) => t.type === "expense").slice(0, 5).map((t) => ({
-    id: t.id, type: "expense" as const, label: t.categories?.name || "Sem categoria",
-    description: t.description || format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy"), amount: t.amount, date: t.date,
+    id: t.id, type: "expense" as const, label: t.categories?.name || "Uncategorized",
+    description: t.description || format(new Date(t.date + "T12:00:00"), "MM/dd/yyyy"), amount: t.amount, date: t.date,
   }));
   const recentEarnings = earnings.slice(0, 5).map((e) => ({
     id: e.id, type: "income" as const, label: e.source_name,
-    description: e.description || format(new Date(e.date + "T12:00:00"), "dd/MM/yyyy"), amount: e.amount, date: e.date,
+    description: e.description || format(new Date(e.date + "T12:00:00"), "MM/dd/yyyy"), amount: e.amount, date: e.date,
   }));
   const recentAll = [...recentExpenses, ...recentEarnings].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
 
@@ -98,9 +99,14 @@ export default function Dashboard() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Visão geral das suas finanças</p>
+          <p className="text-sm text-muted-foreground">Financial overview</p>
         </div>
-        <MonthPicker value={month} onChange={setMonth} />
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={toggleMode}>
+            <ArrowUpDown className="mr-1 h-3 w-3" />{mode}
+          </Button>
+          <MonthPicker value={month} onChange={setMonth} />
+        </div>
       </div>
 
       {/* Insights */}
@@ -123,42 +129,42 @@ export default function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Patrimônio Líquido</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Net Worth</CardTitle>
             <Building2 className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${netWorth >= 0 ? "text-primary" : "text-expense"}`}>{formatCurrency(netWorth)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Contas + Invest. - Dívidas</p>
+            <p className={`text-2xl font-bold ${netWorth >= 0 ? "text-primary" : "text-expense"}`}>{fmt(netWorth)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Assets + Investments - Debts</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo do Mês</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Balance</CardTitle>
             <Wallet className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${balance >= 0 ? "text-income" : "text-expense"}`}>{formatCurrency(balance)}</p>
+            <p className={`text-2xl font-bold ${balance >= 0 ? "text-income" : "text-expense"}`}>{fmt(balance)}</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Income</CardTitle>
             <ArrowUpRight className="h-4 w-4 text-income" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-income">{formatCurrency(income)}</p>
+            <p className="text-2xl font-bold text-income">{fmt(income)}</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Despesas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Expenses</CardTitle>
             <ArrowDownRight className="h-4 w-4 text-expense" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-expense">{formatCurrency(expenses)}</p>
+            <p className="text-2xl font-bold text-expense">{fmt(expenses)}</p>
           </CardContent>
         </Card>
       </div>
@@ -166,17 +172,17 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="glass-card">
-          <CardHeader><CardTitle className="text-base font-semibold">Receitas vs Despesas</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-semibold">Income vs Expenses</CardTitle></CardHeader>
           <CardContent>
             {income === 0 && expenses === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma movimentação neste mês</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">No transactions this month</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" fontSize={12} />
-                  <YAxis fontSize={12} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                  <YAxis fontSize={12} tickFormatter={(v) => formatCompact(v)} />
+                  <Tooltip formatter={(v: number) => fmt(v)} />
                   <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
                     <Cell fill="hsl(var(--income))" />
                     <Cell fill="hsl(var(--expense))" />
@@ -188,10 +194,10 @@ export default function Dashboard() {
         </Card>
 
         <Card className="glass-card">
-          <CardHeader><CardTitle className="text-base font-semibold">Gastos por Categoria</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-semibold">Expenses by Category</CardTitle></CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa neste mês</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">No expenses this month</p>
             ) : (
               <div className="flex flex-col items-center gap-4 sm:flex-row">
                 <ResponsiveContainer width="100%" height={200}>
@@ -199,7 +205,7 @@ export default function Dashboard() {
                     <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45}>
                       {pieData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                    <Tooltip formatter={(v: number) => fmt(v)} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex flex-col gap-1.5 text-xs">
@@ -207,7 +213,7 @@ export default function Dashboard() {
                     <div key={entry.name} className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                       <span className="text-muted-foreground">{entry.name}</span>
-                      <span className="ml-auto font-medium">{formatCurrency(entry.value)}</span>
+                      <span className="ml-auto font-medium">{fmt(entry.value)}</span>
                     </div>
                   ))}
                 </div>
@@ -219,20 +225,20 @@ export default function Dashboard() {
 
       {/* Patrimony breakdown */}
       <Card className="glass-card">
-        <CardHeader><CardTitle className="text-base font-semibold">Composição do Patrimônio</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base font-semibold">Asset Composition</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             {[
-              { label: "Contas", value: accountsBalance, color: "hsl(162, 63%, 41%)" },
-              { label: "Invest. Tradicionais", value: investmentTotal, color: "hsl(199, 89%, 48%)" },
-              { label: "Invest. Alternativos", value: altTotal, color: "hsl(262, 80%, 50%)" },
-              { label: "Criptomoedas", value: cryptoTotal, color: "hsl(38, 92%, 50%)" },
-              { label: "Dívida Cartões", value: -cardDebt, color: "hsl(0, 72%, 51%)" },
+              { label: "Accounts", value: accountsBalance, color: "hsl(162, 63%, 41%)" },
+              { label: "Traditional Inv.", value: investmentTotal, color: "hsl(199, 89%, 48%)" },
+              { label: "Alt. Investments", value: altTotal, color: "hsl(262, 80%, 50%)" },
+              { label: "Crypto", value: cryptoTotal, color: "hsl(38, 92%, 50%)" },
+              { label: "Card Debt", value: -cardDebt, color: "hsl(0, 72%, 51%)" },
             ].map(item => (
               <div key={item.label} className="text-center">
                 <div className="h-2 rounded-full mb-2" style={{ backgroundColor: item.color }} />
                 <p className="text-xs text-muted-foreground">{item.label}</p>
-                <p className={`text-sm font-semibold ${item.value < 0 ? "text-expense" : ""}`}>{formatCurrency(Math.abs(item.value))}</p>
+                <p className={`text-sm font-semibold ${item.value < 0 ? "text-expense" : ""}`}>{fmt(Math.abs(item.value))}</p>
               </div>
             ))}
           </div>
@@ -241,10 +247,10 @@ export default function Dashboard() {
 
       {/* Recent transactions */}
       <Card className="glass-card">
-        <CardHeader><CardTitle className="text-base font-semibold">Movimentações Recentes</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base font-semibold">Recent Activity</CardTitle></CardHeader>
         <CardContent>
           {recentAll.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma movimentação encontrada</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">No transactions found</p>
           ) : (
             <div className="space-y-3">
               {recentAll.map((t) => (
@@ -259,7 +265,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <p className={`text-sm font-semibold ${t.type === "income" ? "text-income" : "text-expense"}`}>
-                    {t.type === "income" ? "+" : "-"}{formatCurrency(t.amount)}
+                    {t.type === "income" ? "+" : "-"}{fmt(t.amount)}
                   </p>
                 </div>
               ))}

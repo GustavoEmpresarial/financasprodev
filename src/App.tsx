@@ -23,6 +23,7 @@ import AltInvestments from "./pages/AltInvestments";
 import Earnings from "./pages/Earnings";
 import Accounts from "./pages/Accounts";
 import Subscriptions from "./pages/Subscriptions";
+import NetWorth from "./pages/NetWorth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -55,6 +56,7 @@ function AppRoutes() {
       <Route path="/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
       <Route path="/accounts" element={<ProtectedRoute><Accounts /></ProtectedRoute>} />
       <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
+      <Route path="/net-worth" element={<ProtectedRoute><NetWorth /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

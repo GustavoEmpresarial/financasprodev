@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle, Building2, Download } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle, Building2, Download, ArrowUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -15,6 +15,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useCreditCards } from "@/hooks/useCreditCards";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function Analytics() {
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -40,8 +41,9 @@ export default function Analytics() {
   const { data: budgets = [] } = useCategoryBudgets(month);
   const { data: accounts = [] } = useAccounts();
   const { data: cards = [] } = useCreditCards();
+  const { format: fmt, formatCompact, mode, toggleMode } = useCurrency();
 
-  const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const formatCurrency = fmt;
 
   const income = earnings.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
   const expenses = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
@@ -115,9 +117,12 @@ export default function Analytics() {
           <p className="text-sm text-muted-foreground">Indicadores financeiros e análise comparativa</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button size="sm" variant="outline" onClick={toggleMode}>
+            <ArrowUpDown className="mr-1 h-3 w-3" />{mode}
+          </Button>
           <MonthPicker value={month} onChange={setMonth} />
           <Button size="sm" variant="outline" onClick={handleExportJSON}>
-            <Download className="mr-2 h-4 w-4" />Exportar
+            <Download className="mr-2 h-4 w-4" />Export
           </Button>
         </div>
       </div>
@@ -188,7 +193,7 @@ export default function Analytics() {
               <AreaChart data={evolutionData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" fontSize={12} />
-                <YAxis fontSize={12} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                <YAxis fontSize={12} tickFormatter={(v) => formatCompact(v)} />
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
                 <Area type="monotone" dataKey="receitas" stroke="hsl(152, 69%, 40%)" fill="hsl(152, 69%, 40%)" fillOpacity={0.1} strokeWidth={2} name="Receitas" />
                 <Area type="monotone" dataKey="despesas" stroke="hsl(0, 72%, 51%)" fill="hsl(0, 72%, 51%)" fillOpacity={0.1} strokeWidth={2} name="Despesas" />
@@ -240,7 +245,7 @@ export default function Analytics() {
             <BarChart data={evolutionData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" fontSize={12} />
-              <YAxis fontSize={12} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+              <YAxis fontSize={12} tickFormatter={(v) => formatCompact(v)} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Bar dataKey="receitas" fill="hsl(152, 69%, 40%)" radius={[4, 4, 0, 0]} name="Receitas" />
               <Bar dataKey="despesas" fill="hsl(0, 72%, 51%)" radius={[4, 4, 0, 0]} name="Despesas" />

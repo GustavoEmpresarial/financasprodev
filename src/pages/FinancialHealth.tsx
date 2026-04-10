@@ -1,11 +1,14 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Heart, ShieldCheck, Flame, PiggyBank, Scale } from "lucide-react";
+import { Heart, ShieldCheck, Flame, PiggyBank, Scale, ArrowUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useEarnings } from "@/hooks/useEarnings";
 import { useInvestments } from "@/hooks/useInvestments";
 import { useCrypto } from "@/hooks/useCrypto";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
@@ -44,13 +47,14 @@ function RuleBar({ label, value, target, color }: { label: string; value: number
 export default function FinancialHealth() {
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
   const { data: transactions = [] } = useTransactions(month);
+  const { data: earningsData = [] } = useEarnings(month);
   const { data: investments = [] } = useInvestments();
   const { data: cryptoHoldings = [], livePrices } = useCrypto();
+  const { format: fmt, mode, toggleMode } = useCurrency();
 
-  const formatCurrency = (v: number) =>
-    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const formatCurrency = fmt;
 
-  const income = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const income = earningsData.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
   const expenses = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 
   // Category breakdown for 50/30/20
@@ -130,6 +134,9 @@ export default function FinancialHealth() {
           <p className="text-sm text-muted-foreground">Indicadores e diagnóstico das suas finanças</p>
         </div>
         <MonthPicker value={month} onChange={setMonth} />
+        <Button size="sm" variant="outline" onClick={toggleMode}>
+          <ArrowUpDown className="mr-1 h-3 w-3" />{mode}
+        </Button>
       </div>
 
       {/* Score + Key metrics */}

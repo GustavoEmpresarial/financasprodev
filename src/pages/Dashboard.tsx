@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Building2, AlertTriangle, RefreshCw, ArrowUpDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Building2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -26,7 +26,7 @@ export default function Dashboard() {
   const { data: cryptoHoldings = [], livePrices } = useCrypto();
   const { investments: altInvs = [] } = useAltInvestments();
   const { data: cards = [] } = useCreditCards();
-  const { format: fmt, formatCompact, mode, toggleMode, convert } = useCurrency();
+  const { format: fmt, formatCompact } = useCurrency();
 
   const income = earnings.filter((e) => e.currency === "BRL").reduce((sum, e) => sum + e.amount, 0);
   const expenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
@@ -65,32 +65,32 @@ export default function Dashboard() {
   const pieData = Array.from(categoryMap.values());
 
   const barData = [
-    { name: "Income", valor: income },
-    { name: "Expenses", valor: expenses },
+    { name: "Receitas", valor: income },
+    { name: "Despesas", valor: expenses },
   ];
 
   // Insights
   const insights: { type: "warning" | "success" | "info"; message: string }[] = [];
-  if (expenses > income && income > 0) insights.push({ type: "warning", message: `Expenses exceed income by ${fmt(expenses - income)}` });
+  if (expenses > income && income > 0) insights.push({ type: "warning", message: `As despesas superam as receitas em ${fmt(expenses - income)}` });
   if (cardDebt > 0) {
     const totalLimit = cards.reduce((s, c) => s + c.total_limit, 0);
     const usePct = totalLimit > 0 ? (cardDebt / totalLimit) * 100 : 0;
-    if (usePct > 70) insights.push({ type: "warning", message: `Card limit usage: ${usePct.toFixed(0)}%` });
+    if (usePct > 70) insights.push({ type: "warning", message: `Uso do limite dos cartões: ${usePct.toFixed(0)}%` });
   }
   if (balance > 0 && income > 0) {
     const savingsRate = (balance / income) * 100;
-    if (savingsRate > 30) insights.push({ type: "success", message: `Great! You saved ${savingsRate.toFixed(0)}% of income` });
+    if (savingsRate > 30) insights.push({ type: "success", message: `Ótimo! Você poupou ${savingsRate.toFixed(0)}% das receitas` });
   }
-  if (monthlySubsCost > 0) insights.push({ type: "info", message: `Subscriptions: ${fmt(monthlySubsCost)}/mo (${activeSubs.length} active)` });
+  if (monthlySubsCost > 0) insights.push({ type: "info", message: `Assinaturas: ${fmt(monthlySubsCost)}/mês (${activeSubs.length} ativas)` });
 
   // Recent activity
   const recentExpenses = transactions.filter((t) => t.type === "expense").slice(0, 5).map((t) => ({
-    id: t.id, type: "expense" as const, label: t.categories?.name || "Uncategorized",
-    description: t.description || format(new Date(t.date + "T12:00:00"), "MM/dd/yyyy"), amount: t.amount, date: t.date,
+    id: t.id, type: "expense" as const, label: t.categories?.name || "Sem categoria",
+    description: t.description || format(new Date(t.date + "T12:00:00"), "dd/MM/yyyy"), amount: t.amount, date: t.date,
   }));
   const recentEarnings = earnings.slice(0, 5).map((e) => ({
     id: e.id, type: "income" as const, label: e.source_name,
-    description: e.description || format(new Date(e.date + "T12:00:00"), "MM/dd/yyyy"), amount: e.amount, date: e.date,
+    description: e.description || format(new Date(e.date + "T12:00:00"), "dd/MM/yyyy"), amount: e.amount, date: e.date,
   }));
   const recentAll = [...recentExpenses, ...recentEarnings].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
 
@@ -98,13 +98,10 @@ export default function Dashboard() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Financial overview</p>
+          <h1 className="text-2xl font-bold tracking-tight">Painel</h1>
+          <p className="text-sm text-muted-foreground">Visão Geral Financeira</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={toggleMode}>
-            <ArrowUpDown className="mr-1 h-3 w-3" />{mode}
-          </Button>
           <MonthPicker value={month} onChange={setMonth} />
         </div>
       </div>
@@ -129,18 +126,18 @@ export default function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Net Worth</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Patrimônio Líquido</CardTitle>
             <Building2 className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <p className={`text-2xl font-bold ${netWorth >= 0 ? "text-primary" : "text-expense"}`}>{fmt(netWorth)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Assets + Investments - Debts</p>
+            <p className="text-xs text-muted-foreground mt-1">Ativos + Investimentos - Dívidas</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Balance</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Mensal</CardTitle>
             <Wallet className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
@@ -150,7 +147,7 @@ export default function Dashboard() {
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Income</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas</CardTitle>
             <ArrowUpRight className="h-4 w-4 text-income" />
           </CardHeader>
           <CardContent>
@@ -160,7 +157,7 @@ export default function Dashboard() {
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Despesas</CardTitle>
             <ArrowDownRight className="h-4 w-4 text-expense" />
           </CardHeader>
           <CardContent>
@@ -172,10 +169,10 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="glass-card">
-          <CardHeader><CardTitle className="text-base font-semibold">Income vs Expenses</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-semibold">Receitas x Despesas</CardTitle></CardHeader>
           <CardContent>
             {income === 0 && expenses === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">No transactions this month</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma movimentação neste mês.</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={barData}>
@@ -194,10 +191,10 @@ export default function Dashboard() {
         </Card>
 
         <Card className="glass-card">
-          <CardHeader><CardTitle className="text-base font-semibold">Expenses by Category</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-semibold">Despesas por Categoria</CardTitle></CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">No expenses this month</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa registrada neste mês.</p>
             ) : (
               <div className="flex flex-col items-center gap-4 sm:flex-row">
                 <ResponsiveContainer width="100%" height={200}>
@@ -225,15 +222,15 @@ export default function Dashboard() {
 
       {/* Patrimony breakdown */}
       <Card className="glass-card">
-        <CardHeader><CardTitle className="text-base font-semibold">Asset Composition</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base font-semibold">Composição do Patrimônio</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             {[
-              { label: "Accounts", value: accountsBalance, color: "hsl(162, 63%, 41%)" },
-              { label: "Traditional Inv.", value: investmentTotal, color: "hsl(199, 89%, 48%)" },
-              { label: "Alt. Investments", value: altTotal, color: "hsl(262, 80%, 50%)" },
-              { label: "Crypto", value: cryptoTotal, color: "hsl(38, 92%, 50%)" },
-              { label: "Card Debt", value: -cardDebt, color: "hsl(0, 72%, 51%)" },
+              { label: "Contas", value: accountsBalance, color: "hsl(162, 63%, 41%)" },
+              { label: "Invest. Tradicionais", value: investmentTotal, color: "hsl(199, 89%, 48%)" },
+              { label: "Invest. Alternativos", value: altTotal, color: "hsl(262, 80%, 50%)" },
+              { label: "Criptomoedas", value: cryptoTotal, color: "hsl(38, 92%, 50%)" },
+              { label: "Dívida dos Cartões", value: -cardDebt, color: "hsl(0, 72%, 51%)" },
             ].map(item => (
               <div key={item.label} className="text-center">
                 <div className="h-2 rounded-full mb-2" style={{ backgroundColor: item.color }} />
@@ -247,10 +244,10 @@ export default function Dashboard() {
 
       {/* Recent transactions */}
       <Card className="glass-card">
-        <CardHeader><CardTitle className="text-base font-semibold">Recent Activity</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base font-semibold">Atividades Recentes</CardTitle></CardHeader>
         <CardContent>
           {recentAll.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No transactions found</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma movimentação encontrada.</p>
           ) : (
             <div className="space-y-3">
               {recentAll.map((t) => (

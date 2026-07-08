@@ -90,29 +90,9 @@ export default function NetWorth() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <DollarSign className="h-6 w-6 text-primary" />
-            Net Worth
+            Patrimônio Líquido
           </h1>
           <p className="text-sm text-muted-foreground">Patrimônio líquido consolidado em tempo real</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button size="sm" variant="outline" onClick={toggleMode}>
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-            {mode}
-          </Button>
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-muted-foreground whitespace-nowrap">BRL→USD:</Label>
-            <Input
-              type="number"
-              step="0.001"
-              min="0.001"
-              className="w-24 h-8 text-xs"
-              defaultValue={rate}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                if (v > 0) setCustomRate(v);
-              }}
-            />
-          </div>
         </div>
       </div>
 
@@ -164,7 +144,7 @@ export default function NetWorth() {
                 stroke="hsl(199, 89%, 48%)"
                 fill="url(#nwGradient)"
                 strokeWidth={2}
-                name="Net Worth"
+                name="Patrimônio Líquido"
               />
             </AreaChart>
           </ResponsiveContainer>

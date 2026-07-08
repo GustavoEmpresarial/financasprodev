@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Heart, ShieldCheck, Flame, PiggyBank, Scale, ArrowUpDown } from "lucide-react";
+import { Heart, ShieldCheck, Flame, PiggyBank, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useEarnings } from "@/hooks/useEarnings";
@@ -50,7 +49,7 @@ export default function FinancialHealth() {
   const { data: earningsData = [] } = useEarnings(month);
   const { data: investments = [] } = useInvestments();
   const { data: cryptoHoldings = [], livePrices } = useCrypto();
-  const { format: fmt, mode, toggleMode } = useCurrency();
+  const { format: fmt } = useCurrency();
 
   const formatCurrency = fmt;
 
@@ -134,9 +133,6 @@ export default function FinancialHealth() {
           <p className="text-sm text-muted-foreground">Indicadores e diagnóstico das suas finanças</p>
         </div>
         <MonthPicker value={month} onChange={setMonth} />
-        <Button size="sm" variant="outline" onClick={toggleMode}>
-          <ArrowUpDown className="mr-1 h-3 w-3" />{mode}
-        </Button>
       </div>
 
       {/* Score + Key metrics */}

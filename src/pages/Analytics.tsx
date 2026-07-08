@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle, Building2, Download, ArrowUpDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, PieChart as PieIcon, BarChart3, AlertTriangle, Building2, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -41,7 +41,7 @@ export default function Analytics() {
   const { data: budgets = [] } = useCategoryBudgets(month);
   const { data: accounts = [] } = useAccounts();
   const { data: cards = [] } = useCreditCards();
-  const { format: fmt, formatCompact, mode, toggleMode } = useCurrency();
+  const { format: fmt, formatCompact } = useCurrency();
 
   const formatCurrency = fmt;
 
@@ -117,12 +117,9 @@ export default function Analytics() {
           <p className="text-sm text-muted-foreground">Indicadores financeiros e análise comparativa</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button size="sm" variant="outline" onClick={toggleMode}>
-            <ArrowUpDown className="mr-1 h-3 w-3" />{mode}
-          </Button>
           <MonthPicker value={month} onChange={setMonth} />
           <Button size="sm" variant="outline" onClick={handleExportJSON}>
-            <Download className="mr-2 h-4 w-4" />Export
+            <Download className="mr-2 h-4 w-4" />Exportar
           </Button>
         </div>
       </div>
@@ -281,7 +278,7 @@ export default function Analytics() {
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(162, 63%, 41%)" }} />Contas</div>
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(199, 89%, 48%)" }} />Tradicionais</div>
             <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(262, 80%, 50%)" }} />Alternativos</div>
-            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(38, 92%, 50%)" }} />Crypto</div>
+            <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "hsl(38, 92%, 50%)" }} />Criptomoedas</div>
           </div>
         </CardContent>
       </Card>

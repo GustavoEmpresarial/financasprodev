@@ -28,16 +28,13 @@ import { useEarnings, EARNING_CATEGORIES, type Earning } from "@/hooks/useEarnin
 import { useAltInvestments } from "@/hooks/useAltInvestments";
 import { useInvestments } from "@/hooks/useInvestments";
 
-const CURRENCIES = ["BRL", "USD", "BTC", "ETH", "USDT", "SOL"];
+const CURRENCIES = ["BRL", "BTC", "ETH", "USDT", "SOL"];
 
 function formatCurrency(v: number, currency = "BRL") {
   if (["BTC", "ETH", "SOL", "USDT"].includes(currency)) {
     return `${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 8 })} ${currency}`;
   }
-  return v.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: currency === "USD" ? "USD" : "BRL",
-  });
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function getCategoryLabel(val: string) {
@@ -190,8 +187,7 @@ export default function Earnings() {
 
   // Monthly total (BRL only for simplicity)
   const monthlyBRL = earnings.filter((e) => e.currency === "BRL").reduce((s, e) => s + e.amount, 0);
-  const monthlyUSD = earnings.filter((e) => e.currency === "USD").reduce((s, e) => s + e.amount, 0);
-  const monthlyCrypto = earnings.filter((e) => !["BRL", "USD"].includes(e.currency)).length;
+  const monthlyCrypto = earnings.filter((e) => !["BRL"].includes(e.currency)).length;
 
   // Yearly total
   const year = month.split("-")[0];
@@ -237,17 +233,17 @@ export default function Earnings() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ganhos & Lucros</h1>
-          <p className="text-sm text-muted-foreground">Registre e acompanhe todos os seus ganhos de investimentos e outras fontes</p>
+          <h1 className="text-2xl font-bold tracking-tight">Receitas</h1>
+          <p className="text-sm text-muted-foreground">Registre e acompanhe todas as suas receitas de investimentos e outras fontes</p>
         </div>
         <div className="flex items-center gap-3">
           <MonthPicker value={month} onChange={setMonth} />
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button size="sm"><Plus className="h-4 w-4 mr-1" />Novo Ganho</Button>
+              <Button size="sm"><Plus className="h-4 w-4 mr-1" />Nova Receita</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>Registrar Ganho</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Registrar Receita</DialogTitle></DialogHeader>
               <EarningForm
                 onSubmit={(data) => { addEarning.mutate(data, { onSuccess: () => setAddOpen(false) }); }}
                 isPending={addEarning.isPending}
@@ -260,10 +256,10 @@ export default function Earnings() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card className="glass-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Mensal (BRL)</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Mensal</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-income">{formatCurrency(monthlyBRL)}</p>
@@ -271,15 +267,7 @@ export default function Earnings() {
         </Card>
         <Card className="glass-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Mensal (USD)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-income">{formatCurrency(monthlyUSD, "USD")}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Ganhos Crypto</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Receitas em Cripto</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-primary">{monthlyCrypto} registros</p>
@@ -287,7 +275,7 @@ export default function Earnings() {
         </Card>
         <Card className="glass-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Acumulado {year} (BRL)</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Acumulado {year}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-income">{formatCurrency(yearlyBRL)}</p>

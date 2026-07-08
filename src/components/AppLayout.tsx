@@ -2,7 +2,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +12,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex h-14 items-center justify-between border-b bg-card/50 px-4 backdrop-blur-sm lg:px-6">
             <SidebarTrigger />
             <div className="flex items-center gap-2">
-              <VoiceAssistant />
               <ThemeToggle />
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Plus, Trash2, TrendingDown, Download } from "lucide-react";
-import { ReceiptScanner } from "@/components/ReceiptScanner";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,7 +121,7 @@ export default function Transactions() {
           <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={expenses.length === 0}>
             <Download className="mr-2 h-4 w-4" />CSV
           </Button>
-          <ReceiptScanner />
+          
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setPaymentMethod("pix"); setSelectedCardId(""); setInstallmentCount("1"); } }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="mr-2 h-4 w-4" />Nova Despesa</Button>

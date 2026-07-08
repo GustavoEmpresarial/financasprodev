@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowDownUp, Wallet, Target, LogOut, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet, Gamepad2, Building2, RefreshCw, ArrowRightLeft, DollarSign } from "lucide-react";
+import { LayoutDashboard, ArrowDownUp, Wallet, Target, LogOut, CreditCard, Receipt, TrendingUp, Bitcoin, BarChart3, Calculator, Heart, FileSpreadsheet, Gamepad2, Building2, RefreshCw, DollarSign } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -15,15 +15,15 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Net Worth", url: "/net-worth", icon: DollarSign },
-  { title: "Accounts", url: "/accounts", icon: Building2 },
-  { title: "Expenses", url: "/transactions", icon: ArrowDownUp },
-  { title: "Earnings", url: "/earnings", icon: Wallet },
-  { title: "Investments", url: "/investments", icon: TrendingUp },
-  { title: "Bills", url: "/bills", icon: Receipt },
-  { title: "Cards", url: "/credit-cards", icon: CreditCard },
-  { title: "Subscriptions", url: "/subscriptions", icon: RefreshCw },
+  { title: "Painel", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Patrimônio Líquido", url: "/net-worth", icon: DollarSign },
+  { title: "Contas", url: "/accounts", icon: Building2 },
+  { title: "Despesas", url: "/transactions", icon: ArrowDownUp },
+  { title: "Receitas", url: "/earnings", icon: Wallet },
+  { title: "Investimentos", url: "/investments", icon: TrendingUp },
+  { title: "Contas a Pagar", url: "/bills", icon: Receipt },
+  { title: "Cartões", url: "/credit-cards", icon: CreditCard },
+  { title: "Assinaturas", url: "/subscriptions", icon: RefreshCw },
 ];
 
 const analysisItems = [

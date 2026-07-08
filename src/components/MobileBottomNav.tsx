@@ -24,14 +24,14 @@ import {
 } from "lucide-react";
 
 const primaryItems = [
-  { title: "Home", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Painel", url: "/dashboard", icon: LayoutDashboard },
   { title: "Contas", url: "/accounts", icon: Building2 },
   { title: "Despesas", url: "/transactions", icon: ArrowDownUp },
   { title: "Análise", url: "/analytics", icon: BarChart3 },
 ];
 
 const moreItems = [
-  { title: "Ganhos", url: "/earnings", icon: Wallet },
+  { title: "Receitas", url: "/earnings", icon: Wallet },
   { title: "Investimentos", url: "/investments", icon: TrendingUp },
   { title: "Contas a Pagar", url: "/bills", icon: Receipt },
   { title: "Cartões", url: "/credit-cards", icon: CreditCard },

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
-import { Building2, TrendingUp, TrendingDown, Landmark, Wallet, Bitcoin, CreditCard, DollarSign, ArrowUpDown } from "lucide-react";
+import { Building2, TrendingUp, TrendingDown, Landmark, Bitcoin, CreditCard, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useInvestments } from "@/hooks/useInvestments";
@@ -13,8 +12,6 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export default function NetWorth() {
   const { data: accounts = [] } = useAccounts();
@@ -24,7 +21,7 @@ export default function NetWorth() {
   const { data: cards = [] } = useCreditCards();
   const { data: allTx = [] } = useTransactions();
 
-  const { format: fmt, formatCompact, mode, toggleMode, convert, setCustomRate, rate, symbol } = useCurrency();
+  const { format: fmt, formatCompact } = useCurrency();
 
   const getPrice = (sym: string) => livePrices.data?.[sym.toLowerCase()]?.brl || 0;
 

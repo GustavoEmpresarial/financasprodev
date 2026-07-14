@@ -35,14 +35,28 @@ export function useTransfers() {
 
   const addTransfer = useMutation({
     mutationFn: async (transfer: { from_account_id: string; to_account_id: string; amount: number; description?: string; date: string }) => {
-      // Insert transfer
+      if (transfer.from_account_id === transfer.to_account_id) {
+        throw new Error("Conta de origem e destino não podem ser iguais");
+      }
+      if (!(transfer.amount > 0)) {
+        throw new Error("O valor da transferência deve ser maior que zero");
+      }
+      const { data: fromAcc, error: fromErr } = await (supabase as any)
+        .from("financial_accounts").select("balance").eq("id", transfer.from_account_id).single();
+      if (fromErr) throw fromErr;
+      const { data: toAcc, error: toErr } = await (supabase as any)
+        .from("financial_accounts").select("balance").eq("id", transfer.to_account_id).single();
+      if (toErr) throw toErr;
+
       const { error } = await (supabase as any).from("account_transfers").insert({ ...transfer, user_id: user!.id });
       if (error) throw error;
-      // Update balances
-      const { data: fromAcc } = await (supabase as any).from("financial_accounts").select("balance").eq("id", transfer.from_account_id).single();
-      const { data: toAcc } = await (supabase as any).from("financial_accounts").select("balance").eq("id", transfer.to_account_id).single();
-      if (fromAcc) await (supabase as any).from("financial_accounts").update({ balance: fromAcc.balance - transfer.amount }).eq("id", transfer.from_account_id);
-      if (toAcc) await (supabase as any).from("financial_accounts").update({ balance: toAcc.balance + transfer.amount }).eq("id", transfer.to_account_id);
+
+      const { error: upFromErr } = await (supabase as any).from("financial_accounts")
+        .update({ balance: Number(fromAcc.balance) - transfer.amount }).eq("id", transfer.from_account_id);
+      if (upFromErr) throw upFromErr;
+      const { error: upToErr } = await (supabase as any).from("financial_accounts")
+        .update({ balance: Number(toAcc.balance) + transfer.amount }).eq("id", transfer.to_account_id);
+      if (upToErr) throw upToErr;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["account_transfers"] });
@@ -54,8 +68,29 @@ export function useTransfers() {
 
   const deleteTransfer = useMutation({
     mutationFn: async (id: string) => {
+      // Buscar transferência para reverter saldos
+      const { data: transfer, error: getErr } = await (supabase as any)
+        .from("account_transfers").select("*").eq("id", id).single();
+      if (getErr) throw getErr;
+
+      const { data: fromAcc } = await (supabase as any)
+        .from("financial_accounts").select("balance").eq("id", transfer.from_account_id).single();
+      const { data: toAcc } = await (supabase as any)
+        .from("financial_accounts").select("balance").eq("id", transfer.to_account_id).single();
+
       const { error } = await (supabase as any).from("account_transfers").delete().eq("id", id);
       if (error) throw error;
+
+      if (fromAcc) {
+        await (supabase as any).from("financial_accounts")
+          .update({ balance: Number(fromAcc.balance) + Number(transfer.amount) })
+          .eq("id", transfer.from_account_id);
+      }
+      if (toAcc) {
+        await (supabase as any).from("financial_accounts")
+          .update({ balance: Number(toAcc.balance) - Number(transfer.amount) })
+          .eq("id", transfer.to_account_id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["account_transfers"] });

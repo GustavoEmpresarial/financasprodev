@@ -19,9 +19,10 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08 } },
 };
 
-function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Section({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) {
   return (
     <motion.section
+      id={id}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-80px" }}

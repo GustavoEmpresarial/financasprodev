@@ -15,6 +15,7 @@ export type FinancialAccount = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 };
 
 export function useAccounts() {
@@ -27,6 +28,7 @@ export function useAccounts() {
       const { data, error } = await (supabase as any)
         .from("financial_accounts")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at");
       if (error) throw error;
       return data as FinancialAccount[];
@@ -48,7 +50,7 @@ export function useAccounts() {
 
   const updateAccount = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<FinancialAccount> & { id: string }) => {
-      const { error } = await (supabase as any).from("financial_accounts").update(updates).eq("id", id);
+      const { error } = await (supabase as any).from("financial_accounts").update(updates).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -60,7 +62,7 @@ export function useAccounts() {
 
   const deleteAccount = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("financial_accounts").delete().eq("id", id);
+      const { error } = await (supabase as any).from("financial_accounts").update({ deleted_at: new Date().toISOString(), is_active: false }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {

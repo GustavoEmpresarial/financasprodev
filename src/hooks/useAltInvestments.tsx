@@ -37,6 +37,7 @@ export function useAltInvestments() {
       const { data, error } = await (supabase as any)
         .from("alt_investments")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as AltInvestment[];
@@ -50,6 +51,7 @@ export function useAltInvestments() {
       const { data, error } = await (supabase as any)
         .from("alt_investment_earnings")
         .select("*")
+        .is("deleted_at", null)
         .order("date", { ascending: false });
       if (error) throw error;
       return data as AltEarning[];
@@ -104,7 +106,7 @@ export function useAltInvestments() {
   const deleteInvestment = useMutation({
     mutationFn: async (id: string) => {
       if (!user) throw new Error("Usuário não autenticado");
-      const { error } = await (supabase as any).from("alt_investments").delete().eq("id", id).eq("user_id", user.id);
+      const { error } = await (supabase as any).from("alt_investments").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -180,7 +182,7 @@ export function useAltInvestments() {
   const deleteEarning = useMutation({
     mutationFn: async (id: string) => {
       if (!user) throw new Error("Usuário não autenticado");
-      const { error } = await (supabase as any).from("alt_investment_earnings").delete().eq("id", id).eq("user_id", user.id);
+      const { error } = await (supabase as any).from("alt_investment_earnings").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: () => {

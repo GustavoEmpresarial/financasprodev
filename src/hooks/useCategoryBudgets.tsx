@@ -22,7 +22,8 @@ export function useCategoryBudgets(month?: string) {
     queryFn: async () => {
       let q = (supabase as any)
         .from("category_budgets")
-        .select("*, categories(name, icon, color)");
+        .select("*, categories(name, icon, color)")
+        .is("deleted_at", null);
       if (month) q = q.eq("month", `${month}-01`);
       const { data, error } = await q;
       if (error) throw error;
@@ -49,7 +50,7 @@ export function useCategoryBudgets(month?: string) {
 
   const deleteBudget = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("category_budgets").delete().eq("id", id);
+      const { error } = await (supabase as any).from("category_budgets").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -26,6 +26,7 @@ export function useTransfers() {
       const { data, error } = await (supabase as any)
         .from("account_transfers")
         .select("*, from_account:financial_accounts!account_transfers_from_account_id_fkey(name, color), to_account:financial_accounts!account_transfers_to_account_id_fkey(name, color)")
+        .is("deleted_at", null)
         .order("date", { ascending: false });
       if (error) throw error;
       return data as AccountTransfer[];
@@ -70,7 +71,7 @@ export function useTransfers() {
     mutationFn: async (id: string) => {
       // Buscar transferência para reverter saldos
       const { data: transfer, error: getErr } = await (supabase as any)
-        .from("account_transfers").select("*").eq("id", id).single();
+        .from("account_transfers").select("*").eq("id", id).eq("user_id", user!.id).is("deleted_at", null).single();
       if (getErr) throw getErr;
 
       const { data: fromAcc } = await (supabase as any)
@@ -78,7 +79,7 @@ export function useTransfers() {
       const { data: toAcc } = await (supabase as any)
         .from("financial_accounts").select("balance").eq("id", transfer.to_account_id).single();
 
-      const { error } = await (supabase as any).from("account_transfers").delete().eq("id", id);
+      const { error } = await (supabase as any).from("account_transfers").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
 
       if (fromAcc) {

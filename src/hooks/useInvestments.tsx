@@ -29,6 +29,7 @@ export function useInvestments() {
       const { data, error } = await (supabase as any)
         .from("investments")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Investment[];
@@ -50,7 +51,7 @@ export function useInvestments() {
 
   const updateInvestment = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Investment> & { id: string }) => {
-      const { error } = await (supabase as any).from("investments").update(updates).eq("id", id);
+      const { error } = await (supabase as any).from("investments").update(updates).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -62,7 +63,7 @@ export function useInvestments() {
 
   const deleteInvestment = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("investments").delete().eq("id", id);
+      const { error } = await (supabase as any).from("investments").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {

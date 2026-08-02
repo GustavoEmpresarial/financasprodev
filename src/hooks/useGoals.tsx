@@ -10,7 +10,7 @@ export function useGoals(month?: string) {
   const query = useQuery({
     queryKey: ["goals", user?.id, month],
     queryFn: async () => {
-      let q = supabase.from("financial_goals").select("*").order("created_at", { ascending: false });
+      let q = supabase.from("financial_goals").select("*").is("deleted_at", null).order("created_at", { ascending: false });
       if (month) q = q.eq("month", `${month}-01`);
       const { data, error } = await q;
       if (error) throw error;
@@ -37,7 +37,7 @@ export function useGoals(month?: string) {
 
   const updateGoal = useMutation({
     mutationFn: async ({ id, current_amount }: { id: string; current_amount: number }) => {
-      const { error } = await supabase.from("financial_goals").update({ current_amount }).eq("id", id);
+      const { error } = await supabase.from("financial_goals").update({ current_amount }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -49,7 +49,7 @@ export function useGoals(month?: string) {
 
   const deleteGoal = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("financial_goals").delete().eq("id", id);
+      const { error } = await supabase.from("financial_goals").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {

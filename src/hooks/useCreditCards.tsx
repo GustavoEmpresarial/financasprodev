@@ -28,6 +28,7 @@ export function useCreditCards() {
       const { data, error } = await (supabase as any)
         .from("credit_cards")
         .select("*")
+        .is("deleted_at", null)
         .order("name");
       if (error) throw error;
       return data as CreditCard[];
@@ -49,7 +50,7 @@ export function useCreditCards() {
 
   const updateCard = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CreditCard> & { id: string }) => {
-      const { error } = await (supabase as any).from("credit_cards").update(updates).eq("id", id);
+      const { error } = await (supabase as any).from("credit_cards").update(updates).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -61,7 +62,7 @@ export function useCreditCards() {
 
   const deleteCard = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("credit_cards").delete().eq("id", id);
+      const { error } = await (supabase as any).from("credit_cards").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {

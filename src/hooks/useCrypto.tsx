@@ -14,6 +14,7 @@ export type CryptoHolding = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 };
 
 export function useCrypto() {
@@ -26,6 +27,7 @@ export function useCrypto() {
       const { data, error } = await (supabase as any)
         .from("crypto_holdings")
         .select("*")
+        .is("deleted_at", null)
         .order("name");
       if (error) throw error;
       return data as CryptoHolding[];
@@ -74,7 +76,7 @@ export function useCrypto() {
 
   const deleteCrypto = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("crypto_holdings").delete().eq("id", id);
+      const { error } = await (supabase as any).from("crypto_holdings").update({ deleted_at: new Date().toISOString() }).eq("id", id).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
